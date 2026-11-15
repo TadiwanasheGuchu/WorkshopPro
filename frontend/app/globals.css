@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+ * WorkshopPro design tokens — source of truth is CLAUDE.md §9.
+ * Light theme only. No gradients, no brown/beige, no purple.
+ * Orange is an action fill only; text on orange is slate.
+ */
+@theme {
+  --color-slate-deep: #202a34;
+  --color-steel: #30485b;
+  --color-mist: #f3f5f6;
+  --color-surface: #ffffff;
+  --color-border: #dde2e6;
+  --color-muted: #5b6670;
+
+  --color-action: #f07c1f;
+  --color-action-hover: #e06a0c;
+  --color-on-action: #202a34;
+
+  /* Status families: dot + tint, text is always slate-deep. */
+  --color-status-neutral: #64748b;
+  --color-status-neutral-tint: #eef1f4;
+  --color-status-active: #2563eb;
+  --color-status-active-tint: #e6eefc;
+  --color-status-waiting: #eab308;
+  --color-status-waiting-tint: #fdf6d8;
+  --color-status-success: #16a34a;
+  --color-status-success-tint: #e3f5e9;
+  --color-status-danger: #dc2626;
+  --color-status-danger-tint: #fbe7e7;
+
+  --radius-control: 6px;
+  --radius-panel: 8px;
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  background: var(--color-mist);
+  color: var(--color-slate-deep);
+  font-family: var(--font-sans);
+}
+
+/* Prevent iOS zoom on input focus: mobile inputs must be ≥16px. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-steel);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
