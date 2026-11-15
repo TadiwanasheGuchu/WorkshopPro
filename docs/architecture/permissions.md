@@ -34,7 +34,18 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `vehicles.view` | branch* | View vehicles and ownership history |
 | `vehicles.manage` | branch* | Register/edit/transfer/archive vehicles |
 
+| `job_cards.view` | branch | View every job card in the branch |
+| `job_cards.create` | branch | Receive vehicles (open job cards) |
+| `job_cards.manage` | branch | Edit job details, every status change, hand over, cancel |
+| `job_cards.assign` | branch | Assign/unassign mechanics |
+| `job_cards.work` | branch | See jobs assigned to you; diagnosis/work notes; workshop status moves |
+| `job_cards.authorise_exception` | branch | Authorise chargeable work without an approved quotation |
+
 \* Customers and vehicles are shared by the whole organisation. A grant in **any** branch gives access to all of them (`Principal.require_in_any_branch`), so a branch-limited service advisor can serve a customer who first visited another branch.
+
+## Job card workflow
+
+The transition table lives in `backend/app/services/job_workflow.py`. Assigned mechanics (`job_cards.work`) may start diagnosis, send for approval, start repair, wait for parts and send to quality check. Quality sign-off, handover, cancellation and re-opening need `job_cards.manage`. Entering *awaiting parts* or *repair in progress* from an unapproved state needs an approved quotation (Phase 3) or an active approval exception (409 `approval_required`).
 
 ## Default roles (seeded per organisation)
 

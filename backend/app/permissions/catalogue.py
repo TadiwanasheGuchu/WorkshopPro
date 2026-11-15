@@ -40,6 +40,12 @@ class P(StrEnum):
     CUSTOMERS_MANAGE = "customers.manage"
     VEHICLES_VIEW = "vehicles.view"
     VEHICLES_MANAGE = "vehicles.manage"
+    JOB_CARDS_VIEW = "job_cards.view"
+    JOB_CARDS_CREATE = "job_cards.create"
+    JOB_CARDS_MANAGE = "job_cards.manage"
+    JOB_CARDS_ASSIGN = "job_cards.assign"
+    JOB_CARDS_WORK = "job_cards.work"
+    JOB_CARDS_AUTHORISE_EXCEPTION = "job_cards.authorise_exception"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -131,6 +137,50 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "Register and edit vehicles, transfer ownership, archive vehicles.",
         Scope.BRANCH,
     ),
+    PermissionDef(
+        P.JOB_CARDS_VIEW,
+        "Job cards",
+        "View job cards",
+        "View every job card in the branch, with history, notes and assignments.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.JOB_CARDS_CREATE,
+        "Job cards",
+        "Receive vehicles",
+        "Book vehicles in and open job cards.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.JOB_CARDS_MANAGE,
+        "Job cards",
+        "Manage job cards",
+        "Edit job details, move jobs through every status, hand over and cancel jobs.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.JOB_CARDS_ASSIGN,
+        "Job cards",
+        "Assign mechanics",
+        "Assign and unassign mechanics on job cards.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.JOB_CARDS_WORK,
+        "Job cards",
+        "Work on assigned jobs",
+        "See jobs assigned to you, add notes and diagnosis, and make workshop status "
+        "updates (start diagnosis, send for approval, start repair, send to quality check).",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.JOB_CARDS_AUTHORISE_EXCEPTION,
+        "Job cards",
+        "Authorise work without quotation approval",
+        "Record a documented exception so chargeable work may start before a quotation is "
+        "approved. Every exception records who, when, why and the scope.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -172,6 +222,12 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.CUSTOMERS_MANAGE,
                 P.VEHICLES_VIEW,
                 P.VEHICLES_MANAGE,
+                P.JOB_CARDS_VIEW,
+                P.JOB_CARDS_CREATE,
+                P.JOB_CARDS_MANAGE,
+                P.JOB_CARDS_ASSIGN,
+                P.JOB_CARDS_WORK,
+                P.JOB_CARDS_AUTHORISE_EXCEPTION,
             }
         ),
     ),
@@ -186,6 +242,9 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.CUSTOMERS_MANAGE,
                 P.VEHICLES_VIEW,
                 P.VEHICLES_MANAGE,
+                P.JOB_CARDS_VIEW,
+                P.JOB_CARDS_CREATE,
+                P.JOB_CARDS_MANAGE,
             }
         ),
     ),
@@ -193,7 +252,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "mechanic",
         "Mechanic",
         "Works on assigned jobs, inspections and repairs.",
-        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW}),
+        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW, P.JOB_CARDS_WORK}),
     ),
     RoleTemplate(
         "inventory_manager",
@@ -205,6 +264,6 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "accounts",
         "Accounts / cashier",
         "Handles invoices, payments and receipts.",
-        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW}),
+        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW, P.JOB_CARDS_VIEW}),
     ),
 )

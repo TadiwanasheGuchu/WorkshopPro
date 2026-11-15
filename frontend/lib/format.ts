@@ -46,3 +46,12 @@ export const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
 export function shortTime(value: string | null): string {
   return value ? value.slice(0, 5) : "";
 }
+
+/** "2500.5" + "NAD" → "N$ 2,500.50". Amounts arrive as decimal strings; never parsed to float. */
+export function formatMoney(amount: string, currency: string): string {
+  const negative = amount.startsWith("-");
+  const [whole, cents = ""] = amount.replace("-", "").split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const symbol = currency === "NAD" ? "N$" : currency;
+  return `${negative ? "-" : ""}${symbol} ${grouped}.${cents.padEnd(2, "0").slice(0, 2)}`;
+}

@@ -3,11 +3,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { AuditList } from "@/components/app/audit-list";
+import { JobHistory } from "@/components/app/job-history";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { DetailList, EmptyState, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { AuditLogEntry, CustomerDetail, Page } from "@/lib/api/types";
+import type { AuditLogEntry, CustomerDetail, JobCardSummary, Page } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { CONSENT_CHANNEL, CONSENT_METHOD, CONTACT_METHOD, formatPhone, vehicleTitle } from "@/lib/labels";
@@ -37,6 +38,7 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
       ? apiGet<Page<AuditLogEntry>>(`/audit-logs?entity_type=customer&entity_id=${id}&page_size=8`)
       : Promise.resolve(null),
   ]);
+  const jobs = canInAnyBranch(me, P.JOB_CARDS_VIEW) ? await apiGet<Page<JobCardSummary>>(`/job-cards?customer_id=${id}&page_size=20`) : null;
   const manage = canInAnyBranch(me, P.CUSTOMERS_MANAGE);
   const manageVehicles = canInAnyBranch(me, P.VEHICLES_MANAGE);
   const prefs = me.organisation;
@@ -138,9 +140,11 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
             )}
           </Panel>
 
-          <Panel title="Job history">
-            <p className="text-sm text-muted">Job cards, quotations and invoices appear here once those modules are in use.</p>
-          </Panel>
+          {jobs ? (
+            <Panel title="Job history" flush>
+              <JobHistory jobs={jobs.items} me={me} showVehicle />
+            </Panel>
+          ) : null}
         </div>
 
         <div className="space-y-5">

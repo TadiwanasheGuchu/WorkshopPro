@@ -147,6 +147,9 @@ class Api:
     def put(self, path: str, **kw: Any) -> Response:
         return self.request("PUT", path, **kw)
 
+    def delete(self, path: str, **kw: Any) -> Response:
+        return self.request("DELETE", path, **kw)
+
     def login(self, email: str, password: str = PASSWORD) -> Response:
         return self.post("/auth/login", json={"email": email, "password": password})
 

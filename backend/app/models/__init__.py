@@ -22,6 +22,13 @@ from app.models.identity import (
     UserSession,
     UserToken,
 )
+from app.models.job_card import (
+    JobApprovalException,
+    JobAssignment,
+    JobCard,
+    JobNote,
+    JobStatusHistory,
+)
 from app.models.organisation import (
     DocumentSequence,
     Organisation,
@@ -39,6 +46,11 @@ __all__ = [
     "CustomerConsent",
     "CustomerContact",
     "DocumentSequence",
+    "JobApprovalException",
+    "JobAssignment",
+    "JobCard",
+    "JobNote",
+    "JobStatusHistory",
     "Organisation",
     "OrganisationSettings",
     "Role",

@@ -299,3 +299,109 @@ export interface Ownership {
   ended_at: string | null;
   note: string | null;
 }
+
+// --------------------------------------------------------------------------- job cards
+
+export type JobStatus =
+  | "vehicle_received"
+  | "inspection_pending"
+  | "diagnosis_in_progress"
+  | "awaiting_approval"
+  | "awaiting_parts"
+  | "repair_in_progress"
+  | "quality_inspection"
+  | "ready_for_collection"
+  | "completed"
+  | "cancelled";
+export type Priority = "low" | "normal" | "high" | "urgent";
+export type FuelLevel = "empty" | "quarter" | "half" | "three_quarters" | "full";
+export type ExceptionType =
+  | "customer_verbal"
+  | "customer_written"
+  | "warranty"
+  | "internal_no_charge"
+  | "safety_emergency"
+  | "other";
+
+export interface Ref {
+  id: UUID;
+  name: string;
+}
+
+export interface JobCardSummary {
+  id: UUID;
+  job_number: string;
+  status: JobStatus;
+  status_label: string;
+  priority: Priority;
+  branch: Ref;
+  customer: Ref;
+  vehicle: { id: UUID; registration_number: string | null; vin: string | null; make: string; model: string; year: number | null };
+  complaint: string;
+  received_at: string;
+  promised_at: string | null;
+  is_overdue: boolean;
+  assignees: Ref[];
+}
+
+export interface TransitionOption {
+  to_status: JobStatus;
+  label: string;
+  allowed: boolean;
+  reason: string | null;
+}
+
+export interface JobCardDetail extends JobCardSummary {
+  requested_work: string | null;
+  diagnosis: string | null;
+  work_performed: string | null;
+  intake_odometer_km: number | null;
+  fuel_level: FuelLevel | null;
+  service_bay: Ref | null;
+  received_by: string | null;
+  collected_at: string | null;
+  collected_by_name: string | null;
+  handover_notes: string | null;
+  cancellation_reason: string | null;
+  version: number;
+  approval_status: "not_required_yet" | "exception_active" | "missing";
+  assignments: { user: Ref; assigned_at: string; assigned_by: string | null; unassigned_at: string | null }[];
+  status_history: { from_status: JobStatus | null; to_status: JobStatus; note: string | null; changed_at: string; changed_by: string | null }[];
+  notes: { id: UUID; body: string; visibility: "internal" | "customer"; author: string | null; created_at: string }[];
+  approval_exceptions: {
+    id: UUID;
+    exception_type: ExceptionType;
+    reason: string;
+    scope: string;
+    customer_contact: string | null;
+    max_amount: string | null;
+    currency_code: string;
+    authorised_by: string;
+    authorised_at: string;
+    revoked_at: string | null;
+    revoked_by: string | null;
+    revoke_reason: string | null;
+  }[];
+  capabilities: {
+    edit_details: boolean;
+    edit_work: boolean;
+    assign: boolean;
+    add_notes: boolean;
+    authorise_exception: boolean;
+    transitions: TransitionOption[];
+  };
+}
+
+export interface AssignableUser {
+  id: UUID;
+  full_name: string;
+  active_jobs: number;
+}
+
+export interface JobSummaryCounts {
+  by_status: Record<JobStatus, number>;
+  open_total: number;
+  overdue: number;
+  received_today: number;
+  my_assigned_open: number;
+}

@@ -6,6 +6,7 @@ from app.api.v1 import (
     branches,
     customers,
     health,
+    job_cards,
     organisation,
     roles,
     users,
@@ -22,3 +23,4 @@ api_router.include_router(roles.router)
 api_router.include_router(audit.router)
 api_router.include_router(customers.router)
 api_router.include_router(vehicles.router)
+api_router.include_router(job_cards.router)

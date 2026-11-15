@@ -5,9 +5,9 @@ import { Suspense } from "react";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { Me, Page, ServiceBay, TaxRate, User } from "@/lib/api/types";
+import type { JobSummaryCounts, Me, Page, ServiceBay, TaxRate, User } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
-import { P, can } from "@/lib/permissions";
+import { P, can, canInAnyBranch } from "@/lib/permissions";
 
 export default function DashboardPage() {
   return (
@@ -24,16 +24,11 @@ async function DashboardContent() {
   const me = await requireMe();
   const isAdmin = can(me, P.SETTINGS_MANAGE) || can(me, P.USERS_MANAGE);
   return (
+    <div className="space-y-5">
+    <WorkshopStrip me={me} />
     <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
       <div className="space-y-5">
         {isAdmin ? <SetupChecklist me={me} /> : null}
-        <Panel title="Workshop operations">
-          <p className="text-muted">
-            Job cards, inspections, customers and vehicles are the next module to be delivered. This
-            dashboard will then show jobs received today, jobs awaiting approval or parts, and vehicles
-            ready for collection.
-          </p>
-        </Panel>
       </div>
       <Panel title="Your access" className="self-start">
         <dl className="space-y-3 text-sm">
@@ -55,6 +50,7 @@ async function DashboardContent() {
           ) : null}
         </dl>
       </Panel>
+    </div>
     </div>
   );
 }
@@ -113,5 +109,42 @@ async function SetupChecklist({ me }: { me: Me }) {
         ))}
       </ul>
     </Panel>
+  );
+}
+
+async function WorkshopStrip({ me }: { me: Me }) {
+  if (!canInAnyBranch(me, P.JOB_CARDS_VIEW) && !canInAnyBranch(me, P.JOB_CARDS_WORK)) return null;
+  const c = await apiGet<JobSummaryCounts>("/job-cards/summary");
+  const viewAll = canInAnyBranch(me, P.JOB_CARDS_VIEW);
+  const items: { label: string; value: number; href: string; tone?: "danger" | "waiting" | "success" }[] = viewAll
+    ? [
+        { label: "Received today", value: c.received_today, href: "/job-cards?view=all" },
+        { label: "Open jobs", value: c.open_total, href: "/job-cards" },
+        { label: "Overdue", value: c.overdue, href: "/job-cards?view=overdue", tone: "danger" },
+        { label: "Awaiting approval", value: c.by_status.awaiting_approval, href: "/job-cards?status=awaiting_approval", tone: "waiting" },
+        { label: "Awaiting parts", value: c.by_status.awaiting_parts, href: "/job-cards?status=awaiting_parts", tone: "waiting" },
+        { label: "Ready for collection", value: c.by_status.ready_for_collection, href: "/job-cards?status=ready_for_collection", tone: "success" },
+      ]
+    : [
+        { label: "My open jobs", value: c.my_assigned_open, href: "/job-cards?view=mine" },
+        { label: "Overdue", value: c.overdue, href: "/job-cards?view=overdue", tone: "danger" },
+      ];
+  const dot = { danger: "bg-status-danger", waiting: "bg-status-waiting", success: "bg-status-success" };
+  return (
+    <section aria-label="Workshop status" className="rounded-panel border border-border bg-surface">
+      <ul className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 [&>li]:border-b [&>li]:border-r [&>li]:border-border">
+        {items.map((i) => (
+          <li key={i.label}>
+            <Link href={i.href} className="block px-4 py-3 hover:bg-mist">
+              <span className="flex items-center gap-1.5 text-xs text-muted">
+                {i.tone && i.value > 0 ? <span aria-hidden className={`size-1.5 rounded-full ${dot[i.tone]}`} /> : null}
+                {i.label}
+              </span>
+              <span className="mt-0.5 block text-xl font-semibold tabular-nums">{i.value}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

@@ -3,11 +3,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { AuditList } from "@/components/app/audit-list";
+import { JobHistory } from "@/components/app/job-history";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { DetailList, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { AuditLogEntry, Ownership, Page, Vehicle } from "@/lib/api/types";
+import type { AuditLogEntry, JobCardSummary, Ownership, Page, Vehicle } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { FUEL_TYPE, TRANSMISSION, formatKm, vehicleTitle } from "@/lib/labels";
@@ -34,6 +35,7 @@ async function Content({ params }: { params: PageProps<"/vehicles/[id]">["params
     apiGet<Ownership[]>(`/vehicles/${id}/ownership`),
     can(me, P.AUDIT_VIEW) ? apiGet<Page<AuditLogEntry>>(`/audit-logs?entity_type=vehicle&entity_id=${id}&page_size=8`) : Promise.resolve(null),
   ]);
+  const jobs = canInAnyBranch(me, P.JOB_CARDS_VIEW) ? await apiGet<Page<JobCardSummary>>(`/job-cards?vehicle_id=${id}&page_size=20`) : null;
   const manage = canInAnyBranch(me, P.VEHICLES_MANAGE);
   const prefs = me.organisation;
 
@@ -92,9 +94,21 @@ async function Content({ params }: { params: PageProps<"/vehicles/[id]">["params
             <p className="text-sm whitespace-pre-line">{v.existing_damage ?? <span className="text-muted">None recorded.</span>}</p>
             {v.notes ? <p className="mt-3 border-t border-border pt-3 text-sm whitespace-pre-line">{v.notes}</p> : null}
           </Panel>
-          <Panel title="Service history">
-            <p className="text-sm text-muted">Job cards and inspections for this vehicle appear here once those modules are in use.</p>
-          </Panel>
+          {jobs ? (
+            <Panel
+              title="Service history"
+              flush
+              actions={
+                canInAnyBranch(me, P.JOB_CARDS_CREATE) && !v.archived_at ? (
+                  <Button asChild size="sm" variant="primary">
+                    <Link href={`/job-cards/new?vehicle_id=${v.id}`}>Receive vehicle</Link>
+                  </Button>
+                ) : null
+              }
+            >
+              <JobHistory jobs={jobs.items} me={me} />
+            </Panel>
+          ) : null}
         </div>
         <div className="space-y-5">
           <Panel title="Ownership history" flush>

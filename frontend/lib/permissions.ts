@@ -14,6 +14,12 @@ export const P = {
   CUSTOMERS_MANAGE: "customers.manage",
   VEHICLES_VIEW: "vehicles.view",
   VEHICLES_MANAGE: "vehicles.manage",
+  JOB_CARDS_VIEW: "job_cards.view",
+  JOB_CARDS_CREATE: "job_cards.create",
+  JOB_CARDS_MANAGE: "job_cards.manage",
+  JOB_CARDS_ASSIGN: "job_cards.assign",
+  JOB_CARDS_WORK: "job_cards.work",
+  JOB_CARDS_AUTHORISE_EXCEPTION: "job_cards.authorise_exception",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];
