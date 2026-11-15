@@ -6,6 +6,14 @@ Import every model module here so Alembic autogenerate sees all tables.
 from app.db.base import Base
 from app.models.audit import AuditLog
 from app.models.branch import Branch, BranchOperatingHours, ServiceBay
+from app.models.customer import (
+    Customer,
+    CustomerAddress,
+    CustomerConsent,
+    CustomerContact,
+    Vehicle,
+    VehicleOwnership,
+)
 from app.models.identity import (
     Role,
     RolePermission,
@@ -26,6 +34,10 @@ __all__ = [
     "Base",
     "Branch",
     "BranchOperatingHours",
+    "Customer",
+    "CustomerAddress",
+    "CustomerConsent",
+    "CustomerContact",
     "DocumentSequence",
     "Organisation",
     "OrganisationSettings",
@@ -37,4 +49,6 @@ __all__ = [
     "UserRoleAssignment",
     "UserSession",
     "UserToken",
+    "Vehicle",
+    "VehicleOwnership",
 ]

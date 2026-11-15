@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, LayoutDashboard, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
+import { Building2, Car, Contact, LayoutDashboard, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,6 +13,8 @@ const icons: Record<NavIcon, LucideIcon> = {
   branches: Building2,
   settings: Settings,
   audit: ScrollText,
+  customers: Contact,
+  vehicles: Car,
 };
 
 function isActive(pathname: string, href: string, match: string[] = []): boolean {

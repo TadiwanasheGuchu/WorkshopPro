@@ -1,7 +1,7 @@
 import type { Me } from "./api/types";
 import { P, can, canInAnyBranch } from "./permissions";
 
-export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit";
+export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles";
 
 export interface NavItem {
   href: string;
@@ -36,9 +36,14 @@ export function navigationFor(me: Me): NavGroup[] {
     admin.push({ href: "/audit-logs", label: "Audit log", icon: "audit" });
   }
 
+  const customers: NavItem[] = [];
+  if (canInAnyBranch(me, P.CUSTOMERS_VIEW)) customers.push({ href: "/customers", label: "Customers", icon: "customers" });
+  if (canInAnyBranch(me, P.VEHICLES_VIEW)) customers.push({ href: "/vehicles", label: "Vehicles", icon: "vehicles" });
+
   const groups: NavGroup[] = [
     { label: "Overview", items: [{ href: "/", label: "Dashboard", icon: "dashboard" }] },
   ];
+  if (customers.length) groups.push({ label: "Customers", items: customers });
   if (admin.length) groups.push({ label: "Administration", items: admin });
   return groups;
 }

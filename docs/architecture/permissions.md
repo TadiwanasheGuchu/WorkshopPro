@@ -17,7 +17,7 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 - A permission with `organisation` scope is never satisfied by a branch-limited role.
 - Roles assigned for an archived branch, and archived roles, grant nothing.
 
-## Current catalogue (Phase 1)
+## Current catalogue
 
 | Code | Scope | Grants |
 |---|---|---|
@@ -29,6 +29,12 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `users.manage` | organisation | Invite, edit, deactivate users; assign roles |
 | `roles.manage` | organisation | Create and edit roles |
 | `audit.view` | organisation | Read the audit log |
+| `customers.view` | branch* | View customers, contacts, consent |
+| `customers.manage` | branch* | Register/edit/archive customers, record consent |
+| `vehicles.view` | branch* | View vehicles and ownership history |
+| `vehicles.manage` | branch* | Register/edit/transfer/archive vehicles |
+
+\* Customers and vehicles are shared by the whole organisation. A grant in **any** branch gives access to all of them (`Principal.require_in_any_branch`), so a branch-limited service advisor can serve a customer who first visited another branch.
 
 ## Default roles (seeded per organisation)
 
@@ -36,11 +42,11 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 |---|---|---|
 | Owner | everything, always | everything automatically |
 | Administrator | all Phase 1 permissions | via data migration |
-| Workshop manager | `branches.view`, `users.view` | job cards, inspections, scheduling, reports |
-| Service advisor | `branches.view` | customers, vehicles, bookings, quotations |
-| Mechanic | `branches.view` | assigned jobs, inspections |
+| Workshop manager | `branches.view`, `users.view`, customers and vehicles (view + manage) | job cards, inspections, scheduling, reports |
+| Service advisor | `branches.view`, customers and vehicles (view + manage) | bookings, quotations |
+| Mechanic | `branches.view`, `customers.view`, `vehicles.view` | assigned jobs, inspections |
 | Inventory manager | `branches.view` | parts, stock, suppliers, purchasing |
-| Accounts / cashier | `branches.view` | invoices, payments |
+| Accounts / cashier | `branches.view`, `customers.view`, `vehicles.view` | invoices, payments |
 
 ## Adding a permission
 

@@ -57,6 +57,11 @@ class Principal:
             permission in perms for perms in self.branch_permissions.values()
         )
 
+    def require_in_any_branch(self, permission: str) -> None:
+        """For organisation-wide data (customers, vehicles) that every branch works with."""
+        if not self.can_in_any_branch(permission):
+            raise PermissionDeniedError("You do not have permission to perform this action.")
+
     def branch_ids_with(self, permission: str) -> set[uuid.UUID] | None:
         """Branches where `permission` applies. None means all branches."""
         if self.can(permission):

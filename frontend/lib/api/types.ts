@@ -192,3 +192,110 @@ export interface Readiness {
   status: "ok" | "error";
   checks: Record<string, { status: "ok" | "error"; latency_ms?: number | null }>;
 }
+
+// --------------------------------------------------------------------------- customers & vehicles
+
+export type CustomerType = "individual" | "company";
+export type ContactMethod = "phone" | "whatsapp" | "email" | "sms";
+export type ConsentChannel = "whatsapp" | "sms" | "email" | "marketing";
+export type ConsentMethod = "verbal" | "written" | "signed_form" | "customer_portal" | "other";
+
+export interface CustomerSummary {
+  id: UUID;
+  customer_type: CustomerType;
+  display_name: string;
+  primary_phone: string | null;
+  primary_email: string | null;
+  vehicle_count: number;
+  archived_at: string | null;
+  created_at: string;
+}
+
+export interface CustomerContact {
+  id: UUID;
+  kind: "phone" | "email";
+  label: string | null;
+  value: string;
+  is_primary: boolean;
+}
+
+export interface CustomerAddress {
+  id: UUID;
+  kind: "physical" | "postal";
+  line1: string;
+  line2: string | null;
+  city: string | null;
+  region: string | null;
+  postal_code: string | null;
+}
+
+export interface Consent {
+  id: UUID;
+  channel: ConsentChannel;
+  status: "granted" | "withdrawn";
+  method: ConsentMethod;
+  evidence: string | null;
+  recorded_at: string;
+  recorded_by: string | null;
+}
+
+export interface VehicleBrief {
+  id: UUID;
+  registration_number: string | null;
+  vin: string | null;
+  make: string;
+  model: string;
+  year: number | null;
+  archived_at: string | null;
+}
+
+export interface CustomerDetail {
+  id: UUID;
+  customer_type: CustomerType;
+  display_name: string;
+  first_name: string | null;
+  last_name: string | null;
+  company_name: string | null;
+  contact_person: string | null;
+  registration_number: string | null;
+  tax_number: string | null;
+  preferred_contact_method: ContactMethod;
+  notes: string | null;
+  archived_at: string | null;
+  created_at: string;
+  contacts: CustomerContact[];
+  addresses: CustomerAddress[];
+  consents: Consent[];
+  vehicles: VehicleBrief[];
+}
+
+export type FuelType = "petrol" | "diesel" | "hybrid" | "electric" | "lpg" | "other";
+export type Transmission = "manual" | "automatic" | "other";
+
+export interface Vehicle {
+  id: UUID;
+  customer: { id: UUID; display_name: string };
+  registration_number: string | null;
+  vin: string | null;
+  engine_number: string | null;
+  make: string;
+  model: string;
+  variant: string | null;
+  year: number | null;
+  fuel_type: FuelType | null;
+  transmission: Transmission | null;
+  colour: string | null;
+  odometer_km: number | null;
+  odometer_recorded_at: string | null;
+  existing_damage: string | null;
+  notes: string | null;
+  archived_at: string | null;
+  created_at: string;
+}
+
+export interface Ownership {
+  customer: { id: UUID; display_name: string };
+  started_at: string;
+  ended_at: string | null;
+  note: string | null;
+}

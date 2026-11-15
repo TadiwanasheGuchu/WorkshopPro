@@ -10,6 +10,10 @@ export const P = {
   USERS_MANAGE: "users.manage",
   ROLES_MANAGE: "roles.manage",
   AUDIT_VIEW: "audit.view",
+  CUSTOMERS_VIEW: "customers.view",
+  CUSTOMERS_MANAGE: "customers.manage",
+  VEHICLES_VIEW: "vehicles.view",
+  VEHICLES_MANAGE: "vehicles.manage",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];

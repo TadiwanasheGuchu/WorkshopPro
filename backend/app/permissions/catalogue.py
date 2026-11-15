@@ -36,6 +36,10 @@ class P(StrEnum):
     USERS_MANAGE = "users.manage"
     ROLES_MANAGE = "roles.manage"
     AUDIT_VIEW = "audit.view"
+    CUSTOMERS_VIEW = "customers.view"
+    CUSTOMERS_MANAGE = "customers.manage"
+    VEHICLES_VIEW = "vehicles.view"
+    VEHICLES_MANAGE = "vehicles.manage"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -97,6 +101,36 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "View the audit trail of security and business events.",
         Scope.ORGANISATION,
     ),
+    # Customers and vehicles are shared by every branch of the organisation, so a grant
+    # in any branch gives access to all of them (Principal.require_in_any_branch).
+    PermissionDef(
+        P.CUSTOMERS_VIEW,
+        "Customers and vehicles",
+        "View customers",
+        "View customer profiles, contact details and communication consent.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.CUSTOMERS_MANAGE,
+        "Customers and vehicles",
+        "Manage customers",
+        "Register and edit customers, record communication consent, archive customers.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.VEHICLES_VIEW,
+        "Customers and vehicles",
+        "View vehicles",
+        "View vehicles, ownership history and existing-damage notes.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.VEHICLES_MANAGE,
+        "Customers and vehicles",
+        "Manage vehicles",
+        "Register and edit vehicles, transfer ownership, archive vehicles.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -130,19 +164,36 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "workshop_manager",
         "Workshop manager",
         "Runs day-to-day workshop operations for a branch.",
-        frozenset({P.BRANCHES_VIEW, P.USERS_VIEW}),
+        frozenset(
+            {
+                P.BRANCHES_VIEW,
+                P.USERS_VIEW,
+                P.CUSTOMERS_VIEW,
+                P.CUSTOMERS_MANAGE,
+                P.VEHICLES_VIEW,
+                P.VEHICLES_MANAGE,
+            }
+        ),
     ),
     RoleTemplate(
         "service_advisor",
         "Service advisor",
         "Handles customers, bookings, quotations and vehicle handover.",
-        frozenset({P.BRANCHES_VIEW}),
+        frozenset(
+            {
+                P.BRANCHES_VIEW,
+                P.CUSTOMERS_VIEW,
+                P.CUSTOMERS_MANAGE,
+                P.VEHICLES_VIEW,
+                P.VEHICLES_MANAGE,
+            }
+        ),
     ),
     RoleTemplate(
         "mechanic",
         "Mechanic",
         "Works on assigned jobs, inspections and repairs.",
-        frozenset({P.BRANCHES_VIEW}),
+        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW}),
     ),
     RoleTemplate(
         "inventory_manager",
@@ -154,6 +205,6 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "accounts",
         "Accounts / cashier",
         "Handles invoices, payments and receipts.",
-        frozenset({P.BRANCHES_VIEW}),
+        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW}),
     ),
 )
