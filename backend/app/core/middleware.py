@@ -1,5 +1,6 @@
 """Request ID, request logging, and secure response headers."""
 
+import hmac
 import logging
 import re
 import time
@@ -7,7 +8,10 @@ import uuid
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
+
+from app.core.context import client_ip_var, request_id_var, user_agent_var, valid_ip
+from app.core.security import CSRF_COOKIE, CSRF_HEADER
 
 logger = logging.getLogger("workshoppro.request")
 
@@ -22,6 +26,22 @@ SECURITY_HEADERS = {
 }
 
 
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+def _csrf_cookie_matches(request: Request) -> bool:
+    """Double-submit check: the X-CSRF-Token header must equal the CSRF cookie.
+
+    Cross-site pages can neither read our cookie nor set custom headers without a CORS
+    preflight, so a match proves the request came from our own frontend. For
+    authenticated requests the auth dependency additionally binds the token to the
+    session (see app/auth/dependencies.py).
+    """
+    cookie = request.cookies.get(CSRF_COOKIE, "")
+    header = request.headers.get(CSRF_HEADER, "")
+    return bool(cookie) and hmac.compare_digest(cookie.encode(), header.encode())
+
+
 class RequestContextMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: object, *, hsts: bool) -> None:
         super().__init__(app)  # type: ignore[arg-type]
@@ -31,6 +51,24 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         incoming = request.headers.get("x-request-id", "")
         request_id = incoming if _REQUEST_ID_RE.match(incoming) else uuid.uuid4().hex
         request.state.request_id = request_id
+        request_id_var.set(request_id)
+        client_ip_var.set(valid_ip(request.client.host if request.client else None))
+        user_agent_var.set(request.headers.get("user-agent", "")[:300] or None)
+
+        if request.method not in SAFE_METHODS and not _csrf_cookie_matches(request):
+            response: Response = JSONResponse(
+                {
+                    "error": {
+                        "code": "csrf_failed",
+                        "message": "Missing or invalid CSRF token. Refresh the page and try again.",
+                        "details": None,
+                        "request_id": request_id,
+                    }
+                },
+                status_code=403,
+            )
+            response.headers["X-Request-ID"] = request_id
+            return response
 
         start = time.perf_counter()
         response = await call_next(request)

@@ -48,6 +48,11 @@ class NotFoundError(AppError):
     code = "not_found"
 
 
+class NotAuthenticatedError(AppError):
+    status_code = 401
+    code = "not_authenticated"
+
+
 class PermissionDeniedError(AppError):
     status_code = 403
     code = "permission_denied"

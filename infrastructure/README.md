@@ -1,3 +1,3 @@
 # Infrastructure
 
-Production reverse proxy (Nginx), backup/restore scripts and monitoring configuration are added in Phase 6. See `docs/development-plan.md`.
+`nginx/default.conf` is the edge proxy used by docker-compose.yml (routing and client-IP trust boundary). TLS, backup/restore scripts and monitoring are added in Phase 6. See `docs/development-plan.md`.

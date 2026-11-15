@@ -34,3 +34,18 @@ Constraint names come from `NAMING_CONVENTION` in `app/db/base.py`, so autogener
 
 ## Baseline (0001)
 Enables the `citext` and `pg_trgm` extensions. No tables yet.
+
+## Phase 1 tables (0002)
+
+| Table | Purpose |
+|---|---|
+| `organisations`, `organisation_settings` | Profile and preferences (currency NAD, Africa/Windhoek, date format) |
+| `tax_rates` | Configurable rates; none seeded; one active default per organisation (partial unique index) |
+| `document_sequences` | Per-organisation numbering, allocated with `SELECT … FOR UPDATE` |
+| `branches`, `branch_operating_hours`, `service_bays` | Branch structure; branches archive, bays retire, nothing is deleted |
+| `users` | Staff; `email` CITEXT, globally unique; `password_hash` null until invitation accepted |
+| `roles`, `role_permissions` | Roles as data, permission codes validated against the code catalogue; one owner role per organisation |
+| `user_role_assignments` | User × role × branch (NULL = all branches), `UNIQUE NULLS NOT DISTINCT` |
+| `user_sessions` | Server-side sessions; token stored as SHA-256 hash |
+| `user_tokens` | Single-use invitation and password-reset tokens (hashed) |
+| `audit_logs` | Append-only; a trigger rejects UPDATE and DELETE |

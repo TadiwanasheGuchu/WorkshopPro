@@ -27,27 +27,34 @@ Deliberately deferred: Celery worker (added in Phase 3 for PDFs / Phase 5 for me
 
 ---
 
-## Phase 1 — Identity and organisation foundation — `next`
+## Phase 1 — Identity and organisation foundation — `done`
 
-| # | Deliverable |
-|---|---|
-| 1.1 | Models + migration: organisations, organisation settings, branches, users, roles, permissions, role-permission and user-role (org- or branch-scoped) assignments, sessions, audit log |
-| 1.2 | Password hashing (Argon2id), login/logout, server-side sessions in httpOnly SameSite cookies, CSRF protection (double-submit token), session expiry/revocation |
-| 1.3 | Password reset with single-use, expiring, hashed tokens; rate limiting on auth endpoints (Redis) |
-| 1.4 | Permission catalogue as code (`job_cards.create`, `invoices.issue`, …), seeded default roles, `require_permission()` dependency, tenant-scoped repository base |
-| 1.5 | Organisation bootstrap CLI (`create-organisation` with first owner) — no public sign-up |
-| 1.6 | Users & roles API + screens: invite, activate/deactivate, assign roles per branch |
-| 1.7 | Branches API + screens: operating hours, service bays |
-| 1.8 | Organisation settings: currency (NAD), time zone (Africa/Windhoek), date format, document numbering sequences, configurable tax rates (no default rate) |
-| 1.9 | Audit log service + read-only audit screen |
-| 1.10 | App shell: permission-aware sidebar, mobile navigation drawer, branch switcher, sign-in screen |
-| 1.11 | Tests: cross-organisation access, permission bypass, session expiry, CSRF, rate limits |
+| # | Deliverable | Status |
+|---|---|---|
+| 1.1 | Models + migration 0002: organisations, settings, tax rates, numbering, branches, hours, bays, users, roles, assignments, sessions, tokens, append-only audit log | done |
+| 1.2 | Argon2id passwords, server-side sessions (HTTP-only SameSite cookie, idle + absolute expiry, revocation), CSRF double-submit bound to session | done |
+| 1.3 | Password reset and invitations with single-use, expiring, hashed tokens; Redis rate limits on sign-in and reset | done |
+| 1.4 | Permission catalogue as code, default role templates, `Principal.require()`, tenant-scoped lookups (404 across organisations) | done |
+| 1.5 | `python -m app.cli create-organisation` installer command | done |
+| 1.6 | Users & roles API and screens (invite, edit, deactivate, role assignments per branch, custom roles) | done |
+| 1.7 | Branches API and screens (operating hours, service bays, archive/restore) | done |
+| 1.8 | Organisation profile, preferences (NAD, Africa/Windhoek), tax rates (none seeded), document numbering | done |
+| 1.9 | Audit log service and screen | done |
+| 1.10 | App shell: permission-aware sidebar, mobile drawer, branch switcher, account menu; sign-in, reset and invitation pages | done |
+| 1.11 | Tests: 95 backend (auth, CSRF, sessions, cross-organisation, escalation, branch scope, numbering concurrency, CLI); Playwright E2E on desktop and phone | done |
+| — | nginx edge in Compose (client-IP trust boundary) and Mailpit for local email | done (pulled forward from Phase 6) |
 
-**Exit:** an owner signs in, creates users and branches, assigns roles; the API rejects actions outside a user's permissions and organisation.
+**Exit:** met. An owner signs in, creates branches, invites users and assigns roles. The API rejects actions outside a user's permissions and organisation (see `backend/tests/test_permissions.py`).
+
+Deferred:
+- Organisation logo upload (needs object storage, Phase 2).
+- Email retries (Celery, Phase 3/5). Until then a failed send is logged and an admin can resend the invitation.
+- Session list / "sign out other devices" screen.
+- Generated OpenAPI types for the frontend.
 
 ---
 
-## Phase 2 — Core workshop operations — `planned`
+## Phase 2 — Core workshop operations — `next`
 
 First end-to-end business flow: **Customer → Vehicle → Inspection → Job Card → Mechanic Assignment**.
 

@@ -4,16 +4,16 @@ Automotive workshop management for garages and service centres in Namibia: custo
 
 Project rules and product specification: [`CLAUDE.md`](CLAUDE.md). Phase plan and progress: [`docs/development-plan.md`](docs/development-plan.md).
 
-**Current state:** Phase 0 (technical foundation) complete. No business features yet.
+**Current state:** Phase 1 (identity and organisation foundation) complete: sign-in, password reset, user invitations, roles and branch-scoped permissions, branches with hours and service bays, organisation settings, tax rates, document numbering and the audit log. Workshop operations (customers, vehicles, inspections, job cards) are next.
 
 ## Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 (App Router), TypeScript strict, Tailwind CSS 4, Zod |
+| Frontend | Next.js 16 (App Router), TypeScript strict, Tailwind CSS 4, Radix UI, React Hook Form, Zod |
 | Backend | Python 3.12+, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic |
 | Data | PostgreSQL 16, Redis 7 |
-| Runtime | Docker Compose |
+| Runtime | Docker Compose, nginx edge, Mailpit (local email) |
 
 ## Quick start (Docker)
 
@@ -25,16 +25,25 @@ docker compose up -d --build
 docker compose ps
 ```
 
+Create the organisation and its owner account. There is no public sign-up; you are prompted for the owner's password:
+
+```bash
+docker compose exec backend python -m app.cli create-organisation \
+  --name "Your Workshop" --owner-email you@example.com --owner-name "Your Name"
+```
+
+Then sign in at http://localhost:3000 and invite staff from **Users & roles**.
+
 | URL | What |
 |---|---|
-| http://localhost:3000 | Web app (currently a system status page) |
-| http://localhost:8000/api/v1/health/live | API liveness |
-| http://localhost:8000/api/v1/health/ready | API readiness (PostgreSQL + Redis) |
-| http://localhost:8000/api/docs | OpenAPI docs (disabled when `ENVIRONMENT=production`) |
+| http://localhost:3000 | Web app (nginx routes `/api` to the backend) |
+| http://localhost:3000/api/v1/health/ready | API readiness (PostgreSQL + Redis) |
+| http://localhost:3000/api/docs | OpenAPI docs (disabled when `ENVIRONMENT=production`) |
+| http://localhost:8025 | Mailpit: invitation and password-reset emails sent locally |
 
 The backend applies database migrations automatically on start (`RUN_MIGRATIONS=false` disables this).
 
-All ports bind to `127.0.0.1` only. Change them in `.env` if they clash with local services.
+Only nginx (and Mailpit) are published, on `127.0.0.1`. Set `WEB_BIND=0.0.0.0` to serve the local network on an on-premises install. For production, set `ENVIRONMENT=production`, a real `SMTP_*` server, `APP_BASE_URL`, and serve over HTTPS.
 
 ```bash
 docker compose logs -f backend      # follow API logs
@@ -54,6 +63,7 @@ cd backend
 uv sync
 export DATABASE_URL=postgresql+psycopg://workshoppro:<password>@localhost:5432/workshoppro
 uv run alembic upgrade head
+uv run python -m app.cli create-organisation --name "Dev Workshop" --owner-email dev@example.com --owner-name Dev
 uv run uvicorn app.main:app --reload
 ```
 
@@ -64,7 +74,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run pytest
 ```
 
-Tests marked `db` run against `DATABASE_URL`/`REDIS_URL` and skip automatically if those are unreachable.
+Tests use a separate database (`<DATABASE_URL name>_test`, created and migrated automatically) and Redis database 15; they skip if PostgreSQL or Redis is unreachable. The role in `DATABASE_URL` needs `CREATEDB`, or set `TEST_DATABASE_URL`.
 
 New migration:
 
@@ -82,11 +92,15 @@ npm install
 API_INTERNAL_URL=http://localhost:8000 npm run dev
 ```
 
+In development `proxy.ts` forwards `/api/*` to `API_INTERNAL_URL`, so the browser uses a single origin just like behind nginx.
+
 Checks:
 
 ```bash
 npm run lint && npm run typecheck && npm run build
 ```
+
+End-to-end tests (Playwright) run against the Compose stack. See [`frontend/tests/e2e/README.md`](frontend/tests/e2e/README.md).
 
 ## Repository layout
 
@@ -94,6 +108,6 @@ npm run lint && npm run typecheck && npm run build
 backend/            FastAPI app (app/), Alembic migrations, tests
 frontend/           Next.js app
 docs/               Architecture, database conventions, decisions, plan
-infrastructure/     Reverse proxy, backup and monitoring config (from Phase 6)
+infrastructure/     nginx edge config; backup and monitoring config (Phase 6)
 docker-compose.yml  Local and single-server deployment
 ```

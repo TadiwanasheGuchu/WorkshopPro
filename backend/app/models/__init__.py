@@ -1,9 +1,40 @@
 """ORM models.
 
 Import every model module here so Alembic autogenerate sees all tables.
-No business tables exist yet (Phase 0); Phase 1 adds identity and organisation models.
 """
 
 from app.db.base import Base
+from app.models.audit import AuditLog
+from app.models.branch import Branch, BranchOperatingHours, ServiceBay
+from app.models.identity import (
+    Role,
+    RolePermission,
+    User,
+    UserRoleAssignment,
+    UserSession,
+    UserToken,
+)
+from app.models.organisation import (
+    DocumentSequence,
+    Organisation,
+    OrganisationSettings,
+    TaxRate,
+)
 
-__all__ = ["Base"]
+__all__ = [
+    "AuditLog",
+    "Base",
+    "Branch",
+    "BranchOperatingHours",
+    "DocumentSequence",
+    "Organisation",
+    "OrganisationSettings",
+    "Role",
+    "RolePermission",
+    "ServiceBay",
+    "TaxRate",
+    "User",
+    "UserRoleAssignment",
+    "UserSession",
+    "UserToken",
+]

@@ -30,6 +30,40 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:3000"]
     )
 
+    # Public URL of the web app; used to build links in emails.
+    app_base_url: str = "http://localhost:3000"
+
+    # --- Sessions ---
+    session_idle_timeout_minutes: int = Field(default=12 * 60, ge=5)
+    session_absolute_timeout_hours: int = Field(default=7 * 24, ge=1)
+    # Secure cookies require HTTPS. Defaults to on in production.
+    cookie_secure: bool | None = None
+
+    # --- Tokens ---
+    password_reset_token_minutes: int = Field(default=60, ge=5)
+    invitation_token_days: int = Field(default=7, ge=1)
+
+    # --- Rate limits (attempts per window) ---
+    rate_limit_enabled: bool = True
+    login_attempts_per_email: int = 10
+    login_attempts_per_ip: int = 50
+    login_window_seconds: int = 15 * 60
+    password_reset_requests_per_ip: int = 10
+    password_reset_window_seconds: int = 60 * 60
+
+    # --- Email (SMTP) ---
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_starttls: bool = False
+    email_from: str = "WorkshopPro <no-reply@workshoppro.local>"
+
+    @field_validator("cookie_secure", mode="before")
+    @classmethod
+    def _empty_is_unset(cls, value: object) -> object:
+        return None if value == "" else value
+
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
@@ -40,6 +74,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.is_production if self.cookie_secure is None else self.cookie_secure
 
 
 @lru_cache

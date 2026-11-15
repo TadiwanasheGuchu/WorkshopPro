@@ -1,5 +1,9 @@
 # Local development and initial single-server deployments.
 # Copy .env.example to .env before starting: docker compose up -d --build
+#
+# Only the nginx edge (and dev tools bound to 127.0.0.1) are published. The backend
+# trusts X-Forwarded-For because it is reachable only through nginx, which overwrites
+# that header with the real client address (infrastructure/nginx/default.conf).
 
 name: workshoppro
 
@@ -44,13 +48,20 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-workshoppro}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-workshoppro}
       REDIS_URL: redis://redis:6379/0
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      FORWARDED_ALLOW_IPS: "*"
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      EMAIL_FROM: ${EMAIL_FROM:-WorkshopPro <no-reply@workshoppro.example>}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    ports:
-      - "127.0.0.1:${API_PORT:-8000}:8000"
     healthcheck:
       test:
         - CMD
@@ -70,8 +81,25 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
     ports:
-      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:80"
+
+  # Catches outgoing email locally (invitations, password resets).
+  # Web UI: http://localhost:8025. Point SMTP_* at a real server in production.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
 
 volumes:
   postgres-data:
