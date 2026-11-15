@@ -5,7 +5,9 @@ from app.api.v1 import (
     auth,
     branches,
     customers,
+    files,
     health,
+    inspections,
     job_cards,
     organisation,
     roles,
@@ -24,3 +26,5 @@ api_router.include_router(audit.router)
 api_router.include_router(customers.router)
 api_router.include_router(vehicles.router)
 api_router.include_router(job_cards.router)
+api_router.include_router(inspections.router)
+api_router.include_router(files.router)

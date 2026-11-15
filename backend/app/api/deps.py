@@ -14,6 +14,7 @@ from app.core.redis import get_redis
 from app.core.security import CSRF_HEADER, SESSION_COOKIE
 from app.db.session import get_db
 from app.integrations.email import EmailSender, get_email_sender
+from app.integrations.storage import ObjectStorage, get_storage
 from app.permissions.principal import Principal, load_principal
 from app.schemas.common import PageParams
 from app.services import auth
@@ -22,6 +23,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
 AppSettings = Annotated[Settings, Depends(get_settings)]
 Mailer = Annotated[EmailSender, Depends(get_email_sender)]
+Storage = Annotated[ObjectStorage, Depends(get_storage)]
 Paging = Annotated[PageParams, Depends()]
 
 

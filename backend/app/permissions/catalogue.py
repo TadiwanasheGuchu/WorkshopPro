@@ -46,6 +46,9 @@ class P(StrEnum):
     JOB_CARDS_ASSIGN = "job_cards.assign"
     JOB_CARDS_WORK = "job_cards.work"
     JOB_CARDS_AUTHORISE_EXCEPTION = "job_cards.authorise_exception"
+    INSPECTIONS_PERFORM = "inspections.perform"
+    INSPECTIONS_AMEND = "inspections.amend"
+    INSPECTION_TEMPLATES_MANAGE = "inspection_templates.manage"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -181,6 +184,28 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "approved. Every exception records who, when, why and the scope.",
         Scope.BRANCH,
     ),
+    # Viewing an inspection follows job card visibility (anyone who can see the job).
+    PermissionDef(
+        P.INSPECTIONS_PERFORM,
+        "Inspections",
+        "Carry out inspections",
+        "Start inspections on visible job cards, record results, notes and photos, and submit.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INSPECTIONS_AMEND,
+        "Inspections",
+        "Amend submitted inspections",
+        "Correct a submitted inspection. Every amendment records the old value and a reason.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INSPECTION_TEMPLATES_MANAGE,
+        "Inspections",
+        "Manage inspection templates",
+        "Create and edit the checklists used for inspections.",
+        Scope.ORGANISATION,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -228,6 +253,8 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.JOB_CARDS_ASSIGN,
                 P.JOB_CARDS_WORK,
                 P.JOB_CARDS_AUTHORISE_EXCEPTION,
+                P.INSPECTIONS_PERFORM,
+                P.INSPECTIONS_AMEND,
             }
         ),
     ),
@@ -245,6 +272,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.JOB_CARDS_VIEW,
                 P.JOB_CARDS_CREATE,
                 P.JOB_CARDS_MANAGE,
+                P.INSPECTIONS_PERFORM,
             }
         ),
     ),
@@ -252,7 +280,15 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "mechanic",
         "Mechanic",
         "Works on assigned jobs, inspections and repairs.",
-        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW, P.JOB_CARDS_WORK}),
+        frozenset(
+            {
+                P.BRANCHES_VIEW,
+                P.CUSTOMERS_VIEW,
+                P.VEHICLES_VIEW,
+                P.JOB_CARDS_WORK,
+                P.INSPECTIONS_PERFORM,
+            }
+        ),
     ),
     RoleTemplate(
         "inventory_manager",

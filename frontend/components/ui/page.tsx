@@ -76,7 +76,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
 
 export function TabNav({ tabs, active }: { tabs: { href: string; label: string }[]; active: string }) {
   return (
-    <nav aria-label="Section" className="mb-5 flex gap-1 border-b border-border">
+    <nav aria-label="Section" className="mb-5 flex gap-1 overflow-x-auto border-b border-border">
       {tabs.map((tab) => {
         const current = tab.href === active;
         return (
@@ -85,7 +85,7 @@ export function TabNav({ tabs, active }: { tabs: { href: string; label: string }
             href={tab.href}
             aria-current={current ? "page" : undefined}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm font-medium",
+              "-mb-px shrink-0 border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap",
               current ? "border-steel text-slate-deep" : "border-transparent text-muted hover:text-slate-deep",
             )}
           >

@@ -29,7 +29,7 @@ from app.schemas.organisation import (
     TaxRateCreate,
     TaxRateUpdate,
 )
-from app.services import audit, branches, numbering
+from app.services import audit, branches, inspection_templates, numbering
 from app.services.common import apply_changes, get_scoped
 
 # --------------------------------------------------------------------------- bootstrap
@@ -97,6 +97,7 @@ def create_organisation(
         )
     )
     branch = branches.create_branch_record(db, org.id, name=branch_name, code=branch_code)
+    inspection_templates.seed_default(db, org.id)
 
     audit.record(
         db,

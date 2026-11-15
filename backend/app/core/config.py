@@ -59,6 +59,15 @@ class Settings(BaseSettings):
     smtp_starttls: bool = False
     email_from: str = "WorkshopPro <no-reply@workshoppro.local>"
 
+    # --- Object storage (S3-compatible) ---
+    storage_endpoint_url: str | None = "http://localhost:8333"
+    storage_bucket: str = "workshoppro"
+    # Credentials must come from the environment; there is no usable default.
+    storage_access_key: str = ""
+    storage_secret_key: str = ""
+    storage_region: str = "us-east-1"
+    storage_auto_create_bucket: bool = True
+
     @field_validator("cookie_secure", mode="before")
     @classmethod
     def _empty_is_unset(cls, value: object) -> object:

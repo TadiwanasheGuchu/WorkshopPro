@@ -60,7 +60,7 @@ from app.schemas.job_card import (
     TransitionRequest,
     VehicleRef,
 )
-from app.services import audit, numbering
+from app.services import audit, inspection_summary, numbering
 from app.services.common import get_scoped
 from app.services.job_workflow import (
     LABELS,
@@ -137,7 +137,7 @@ def _is_assigned(db: Session, job_id: uuid.UUID, user_id: uuid.UUID) -> bool:
     )
 
 
-def _get_visible(
+def get_visible_job_card(
     db: Session, principal: Principal, job_id: uuid.UUID, *, lock: bool = False
 ) -> JobCard:
     _require_any_access(principal)
@@ -385,7 +385,7 @@ def _capabilities(db: Session, principal: Principal, job: JobCard, assigned: boo
 
 
 def get_job_card(db: Session, principal: Principal, job_id: uuid.UUID) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id)
+    job = get_visible_job_card(db, principal, job_id)
     summary = _summaries(db, [job])[0]
 
     history = list(
@@ -504,6 +504,7 @@ def get_job_card(db: Session, principal: Principal, job_id: uuid.UUID) -> JobCar
             )
             for e in exceptions
         ],
+        inspections=inspection_summary.summaries_for_job(db, job.id),
         capabilities=_capabilities(db, principal, job, assigned),
     )
 
@@ -680,7 +681,7 @@ def create_job_card(db: Session, principal: Principal, body: JobCardCreate) -> J
 def update_job_card(
     db: Session, principal: Principal, job_id: uuid.UUID, body: JobCardUpdate
 ) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id, lock=True)
+    job = get_visible_job_card(db, principal, job_id, lock=True)
     _require_open(job)
     _check_version(job, body.version)
     data = body.changes()
@@ -725,7 +726,7 @@ def update_job_card(
 def transition(
     db: Session, principal: Principal, job_id: uuid.UUID, body: TransitionRequest
 ) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id, lock=True)
+    job = get_visible_job_card(db, principal, job_id, lock=True)
     _check_version(job, body.version)
     current, target = JobStatus(job.status), body.to_status
     if not is_valid(current, target):
@@ -806,7 +807,7 @@ def _workers_for_branch(
 
 
 def assignable_users(db: Session, principal: Principal, job_id: uuid.UUID) -> list[AssignableUser]:
-    job = _get_visible(db, principal, job_id)
+    job = get_visible_job_card(db, principal, job_id)
     principal.require(P.JOB_CARDS_ASSIGN, job.branch_id)
     workers = _workers_for_branch(db, principal.organisation_id, job.branch_id)
     loads = (
@@ -834,7 +835,7 @@ def assignable_users(db: Session, principal: Principal, job_id: uuid.UUID) -> li
 def assign(
     db: Session, principal: Principal, job_id: uuid.UUID, user_id: uuid.UUID
 ) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id, lock=True)
+    job = get_visible_job_card(db, principal, job_id, lock=True)
     principal.require(P.JOB_CARDS_ASSIGN, job.branch_id)
     _require_open(job)
     user = db.scalar(
@@ -881,7 +882,7 @@ def assign(
 def unassign(
     db: Session, principal: Principal, job_id: uuid.UUID, user_id: uuid.UUID
 ) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id, lock=True)
+    job = get_visible_job_card(db, principal, job_id, lock=True)
     principal.require(P.JOB_CARDS_ASSIGN, job.branch_id)
     assignment = db.scalar(
         select(JobAssignment).where(
@@ -915,7 +916,7 @@ def unassign(
 
 
 def add_note(db: Session, principal: Principal, job_id: uuid.UUID, body: NoteCreate) -> NoteRead:
-    job = _get_visible(db, principal, job_id)
+    job = get_visible_job_card(db, principal, job_id)
     allowed = (
         principal.can(P.JOB_CARDS_MANAGE, job.branch_id)
         or principal.can(P.JOB_CARDS_CREATE, job.branch_id)
@@ -948,7 +949,7 @@ def add_note(db: Session, principal: Principal, job_id: uuid.UUID, body: NoteCre
 def authorise_exception(
     db: Session, principal: Principal, job_id: uuid.UUID, body: ExceptionCreate
 ) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id, lock=True)
+    job = get_visible_job_card(db, principal, job_id, lock=True)
     principal.require(P.JOB_CARDS_AUTHORISE_EXCEPTION, job.branch_id)
     _require_open(job)
     currency = db.scalar(
@@ -984,7 +985,7 @@ def authorise_exception(
 def revoke_exception(
     db: Session, principal: Principal, job_id: uuid.UUID, exception_id: uuid.UUID, reason: str
 ) -> JobCardDetail:
-    job = _get_visible(db, principal, job_id, lock=True)
+    job = get_visible_job_card(db, principal, job_id, lock=True)
     principal.require(P.JOB_CARDS_AUTHORISE_EXCEPTION, job.branch_id)
     exception = db.scalar(
         select(JobApprovalException).where(

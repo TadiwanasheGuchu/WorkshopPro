@@ -48,3 +48,15 @@ export async function api<T = void>(method: Method, path: string, body?: unknown
 }
 
 export { ApiError };
+
+/** Multipart upload (photos). Same origin, CSRF header, JSON response. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(`/api/v1${path}`, {
+    method: "POST",
+    headers: { accept: "application/json", "x-csrf-token": await csrfToken() },
+    body: form,
+    credentials: "same-origin",
+  });
+  if (!res.ok) throw await toApiError(res);
+  return (await res.json()) as T;
+}

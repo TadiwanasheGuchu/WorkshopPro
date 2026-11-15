@@ -6,6 +6,7 @@ from typing import Annotated, Literal, Self
 from pydantic import AwareDatetime, BaseModel, Field, StringConstraints, model_validator
 
 from app.schemas.common import OptionalStr, Schema, UpdateSchema
+from app.schemas.inspection import InspectionSummary
 from app.services.job_workflow import JobStatus
 
 Priority = Literal["low", "normal", "high", "urgent"]
@@ -200,6 +201,7 @@ class JobCardDetail(JobCardSummary):
     status_history: list[StatusChange]
     notes: list[NoteRead]
     approval_exceptions: list[ExceptionRead]
+    inspections: list[InspectionSummary]
     capabilities: Capabilities
 
 

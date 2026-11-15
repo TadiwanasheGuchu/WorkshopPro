@@ -368,6 +368,7 @@ export interface JobCardDetail extends JobCardSummary {
   assignments: { user: Ref; assigned_at: string; assigned_by: string | null; unassigned_at: string | null }[];
   status_history: { from_status: JobStatus | null; to_status: JobStatus; note: string | null; changed_at: string; changed_by: string | null }[];
   notes: { id: UUID; body: string; visibility: "internal" | "customer"; author: string | null; created_at: string }[];
+  inspections: InspectionSummary[];
   approval_exceptions: {
     id: UUID;
     exception_type: ExceptionType;
@@ -404,4 +405,72 @@ export interface JobSummaryCounts {
   overdue: number;
   received_today: number;
   my_assigned_open: number;
+}
+
+// --------------------------------------------------------------------------- inspections
+
+export type InspectionResult = "pass" | "attention" | "fail" | "not_inspected";
+export type InspectionKind = "intake" | "quality" | "other";
+
+export interface InspectionSummary {
+  id: UUID;
+  kind: InspectionKind;
+  status: "draft" | "submitted";
+  template_name: string;
+  started_by: string | null;
+  submitted_at: string | null;
+  counts: Record<InspectionResult, number>;
+}
+
+export interface InspectionPhoto {
+  id: UUID;
+  file_id: UUID;
+  item_id: UUID | null;
+  caption: string | null;
+  created_at: string;
+}
+
+export interface InspectionItem {
+  id: UUID;
+  section: string;
+  label: string;
+  guidance: string | null;
+  result: InspectionResult;
+  notes: string | null;
+  photos: InspectionPhoto[];
+}
+
+export interface InspectionDetail extends InspectionSummary {
+  job_card: { id: UUID; job_number: string };
+  vehicle: { id: UUID; registration_number: string | null; vin: string | null; make: string; model: string; year: number | null };
+  customer_name: string;
+  branch_name: string;
+  organisation_name: string;
+  odometer_km: number | null;
+  summary: string | null;
+  submitted_by: string | null;
+  created_at: string;
+  items: InspectionItem[];
+  general_photos: InspectionPhoto[];
+  amendments: {
+    item_label: string;
+    old_result: InspectionResult;
+    new_result: InspectionResult;
+    old_notes: string | null;
+    new_notes: string | null;
+    reason: string;
+    amended_by: string;
+    amended_at: string;
+  }[];
+  capabilities: { edit: boolean; amend: boolean };
+}
+
+export interface InspectionTemplate {
+  id: UUID;
+  name: string;
+  description: string | null;
+  is_default: boolean;
+  archived_at: string | null;
+  item_count: number;
+  items: { id: UUID; section: string; label: string; guidance: string | null }[] | null;
 }

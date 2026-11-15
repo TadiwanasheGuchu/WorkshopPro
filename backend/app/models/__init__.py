@@ -22,6 +22,15 @@ from app.models.identity import (
     UserSession,
     UserToken,
 )
+from app.models.inspection import (
+    Inspection,
+    InspectionAmendment,
+    InspectionItem,
+    InspectionPhoto,
+    InspectionTemplate,
+    InspectionTemplateItem,
+    StoredFile,
+)
 from app.models.job_card import (
     JobApprovalException,
     JobAssignment,
@@ -46,6 +55,12 @@ __all__ = [
     "CustomerConsent",
     "CustomerContact",
     "DocumentSequence",
+    "Inspection",
+    "InspectionAmendment",
+    "InspectionItem",
+    "InspectionPhoto",
+    "InspectionTemplate",
+    "InspectionTemplateItem",
     "JobApprovalException",
     "JobAssignment",
     "JobCard",
@@ -56,6 +71,7 @@ __all__ = [
     "Role",
     "RolePermission",
     "ServiceBay",
+    "StoredFile",
     "TaxRate",
     "User",
     "UserRoleAssignment",

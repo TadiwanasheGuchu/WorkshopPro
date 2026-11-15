@@ -39,6 +39,7 @@ from app.core.security import CSRF_COOKIE, hash_password  # noqa: E402
 from app.core.time import utcnow  # noqa: E402
 from app.db.session import get_engine, get_sessionmaker  # noqa: E402
 from app.integrations.email import InMemoryEmailSender, get_email_sender  # noqa: E402
+from app.integrations.storage import InMemoryStorage, get_storage  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Branch, Role, User, UserRoleAssignment  # noqa: E402
 from app.services.organisations import create_organisation  # noqa: E402
@@ -103,9 +104,15 @@ def outbox() -> InMemoryEmailSender:
 
 
 @pytest.fixture
-def app(outbox: InMemoryEmailSender) -> Iterator[Any]:
+def storage() -> InMemoryStorage:
+    return InMemoryStorage()
+
+
+@pytest.fixture
+def app(outbox: InMemoryEmailSender, storage: InMemoryStorage) -> Iterator[Any]:
     application = create_app()
     application.dependency_overrides[get_email_sender] = lambda: outbox
+    application.dependency_overrides[get_storage] = lambda: storage
     yield application
     application.dependency_overrides.clear()
 

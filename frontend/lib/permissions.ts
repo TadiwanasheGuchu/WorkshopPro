@@ -20,6 +20,9 @@ export const P = {
   JOB_CARDS_ASSIGN: "job_cards.assign",
   JOB_CARDS_WORK: "job_cards.work",
   JOB_CARDS_AUTHORISE_EXCEPTION: "job_cards.authorise_exception",
+  INSPECTIONS_PERFORM: "inspections.perform",
+  INSPECTIONS_AMEND: "inspections.amend",
+  INSPECTION_TEMPLATES_MANAGE: "inspection_templates.manage",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];

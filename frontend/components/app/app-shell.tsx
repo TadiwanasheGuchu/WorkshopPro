@@ -17,8 +17,8 @@ export async function AppShell({ me, children }: { me: Me; children: ReactNode }
   const allowAll = me.branches.length > 1;
 
   return (
-    <div className="min-h-full lg:grid lg:grid-cols-[15rem_1fr]">
-      <aside className="hidden bg-slate-deep lg:block">
+    <div className="min-h-full lg:grid lg:grid-cols-[15rem_1fr] print:block">
+      <aside className="hidden bg-slate-deep lg:block print:hidden">
         <div className="sticky top-0 flex h-screen flex-col overflow-y-auto p-3">
           <div className="mb-5 px-3 pt-2">
             <p className="text-sm font-semibold tracking-wide text-white">WORKSHOPPRO</p>
@@ -29,7 +29,7 @@ export async function AppShell({ me, children }: { me: Me; children: ReactNode }
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
+        <header className="sticky top-0 z-30 flex h-14 print:hidden items-center gap-3 border-b border-border bg-surface px-4">
           <MobileNav groups={groups} organisationName={me.organisation.name} />
           <span className="font-semibold lg:hidden">WorkshopPro</span>
           <div className="ml-auto flex items-center gap-3">

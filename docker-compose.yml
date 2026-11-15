@@ -57,10 +57,17 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
       EMAIL_FROM: ${EMAIL_FROM:-WorkshopPro <no-reply@workshoppro.example>}
+      STORAGE_ENDPOINT_URL: ${STORAGE_ENDPOINT_URL:-http://storage:8333}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-workshoppro}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:?Set STORAGE_ACCESS_KEY in .env}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:?Set STORAGE_SECRET_KEY in .env}
+      STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      storage:
         condition: service_healthy
     healthcheck:
       test:
@@ -93,6 +100,27 @@ services:
     ports:
       - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:80"
 
+  # S3-compatible object storage for photos and documents (SeaweedFS, Apache-2.0).
+  # Data stays on this server's volume. Production can instead point STORAGE_* at a
+  # managed S3-compatible service and drop this container.
+  storage:
+    image: chrislusf/seaweedfs:3.97
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/opt/workshoppro/entrypoint.sh"]
+    environment:
+      S3_ACCESS_KEY: ${STORAGE_ACCESS_KEY:?Set STORAGE_ACCESS_KEY in .env}
+      S3_SECRET_KEY: ${STORAGE_SECRET_KEY:?Set STORAGE_SECRET_KEY in .env}
+    volumes:
+      - ./infrastructure/seaweedfs/entrypoint.sh:/opt/workshoppro/entrypoint.sh:ro
+      - storage-data:/data
+    healthcheck:
+      # Any HTTP response (403 without credentials) means the S3 API is up.
+      test: ["CMD-SHELL", "wget -q -S -O /dev/null http://127.0.0.1:8333/ 2>&1 | grep -q HTTP/"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   # Catches outgoing email locally (invitations, password resets).
   # Web UI: http://localhost:8025. Point SMTP_* at a real server in production.
   mailpit:
@@ -104,3 +132,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  storage-data:

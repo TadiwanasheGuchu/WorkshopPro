@@ -12,7 +12,7 @@ import { requireMe } from "@/lib/auth";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { EXCEPTION_TYPE_LABEL, FUEL_LEVEL_LABEL, JOB_STATUS_LABEL, PRIORITY_LABEL } from "@/lib/job-status";
 import { formatKm, vehicleTitle } from "@/lib/labels";
-import { P, canInAnyBranch } from "@/lib/permissions";
+import { P, can, canInAnyBranch } from "@/lib/permissions";
 
 import {
   AddNote,
@@ -23,6 +23,7 @@ import {
   StatusActions,
   WorkRecord,
 } from "./job-actions";
+import { InspectionList, StartInspectionButton } from "./inspections-panel";
 
 export const metadata: Metadata = { title: "Job card" };
 
@@ -42,6 +43,7 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
   const prefs = me.organisation;
   const caps = job.capabilities;
   const activeExceptions = job.approval_exceptions.filter((e) => !e.revoked_at);
+  const canPerform = can(me, P.INSPECTIONS_PERFORM, job.branch.id);
 
   return (
     <>
@@ -94,6 +96,18 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
                 <p className="whitespace-pre-line">{job.requested_work}</p>
               </div>
             ) : null}
+          </Panel>
+
+          <Panel
+            title="Inspections"
+            flush
+            actions={
+              canPerform && !["completed", "cancelled"].includes(job.status) ? (
+                <StartInspectionButton jobId={job.id} hasIntake={job.inspections.some((i) => i.kind === "intake")} />
+              ) : null
+            }
+          >
+            <InspectionList inspections={job.inspections} />
           </Panel>
 
           <Panel title="Work record">
