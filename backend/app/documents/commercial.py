@@ -24,6 +24,7 @@ from app.documents.base import (
     totals,
 )
 from app.schemas.invoice import InvoiceRead, PaymentRead
+from app.schemas.purchasing import PoRead
 from app.schemas.quotation import ItemRead, QuotationRead
 
 KIND = {"labour": "Labour", "part": "Part", "fee": "Fee", "discount": "Discount"}
@@ -399,6 +400,68 @@ def receipt(org: OrgInfo, pay: PaymentRead, customer: Party) -> bytes:
         title=title,
         meta=[(title, pay.receipt_number), ("Date", org.datetime(pay.received_at))],
         customer=customer,
+        notice=notice,
+        body=body,
+    ).render()
+
+
+# --------------------------------------------------------------------------- purchase order
+
+
+def purchase_order(
+    org: OrgInfo, po: PoRead, supplier: Party, deliver_to: list[str], account_number: str | None
+) -> bytes:
+    c = po.currency_code
+    notice = None
+    if po.status == "draft":
+        notice = "Draft: not approved. Do not supply against this order."
+    elif po.status == "cancelled":
+        notice = f"Cancelled: {po.closed_reason}"
+    elif po.status == "closed":
+        notice = f"Closed: {po.closed_reason}. Outstanding quantities are no longer required."
+    rows = []
+    for line in po.lines:
+        desc: list[Flowable] = [p(line.part.name)]
+        codes = f"Our code {line.sku}" + (
+            f" · your code {line.supplier_sku}" if line.supplier_sku else ""
+        )
+        desc.append(small(codes))
+        rows.append(
+            [
+                desc,
+                quantity(line.quantity_ordered),
+                money(line.unit_cost, c),
+                money(line.line_total, c),
+            ]
+        )
+    body: list[Flowable] = [
+        data_table(
+            ["Item", "Qty", "Unit cost", "Amount"],
+            rows,
+            [CONTENT_W - 94 * mm, 18 * mm, 34 * mm, 42 * mm],
+            right_cols=(1, 2, 3),
+        ),
+        Spacer(1, 3 * mm),
+        keep(totals([("Total (excl. tax)", money(po.total, c))])),
+        heading("Deliver to"),
+        *[p(line) for line in deliver_to],
+    ]
+    body += paragraph_block("Notes", po.notes)
+    body += [
+        Spacer(1, 4 * mm),
+        small(f"Please quote {po.po_number} on your delivery note and invoice."),
+    ]
+    meta = [("Order", po.po_number), ("Date", org.date(po.approved_at or po.created_at))]
+    if po.expected_date:
+        meta.append(("Required by", org.date(po.expected_date)))
+    if account_number:
+        meta.append(("Our account", account_number))
+    return Document(
+        org=org,
+        title="Purchase order",
+        meta=meta,
+        customer=supplier,
+        party_label="Supplier",
         notice=notice,
         body=body,
     ).render()

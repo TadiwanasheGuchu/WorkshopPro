@@ -115,3 +115,15 @@ def public_quotation_pdf(
         enabled=settings.rate_limit_enabled,
     )
     return _pdf(documents.public_quotation_pdf(db, body.token), download=True)
+
+
+@router.get(
+    "/purchase-orders/{po_id}/pdf",
+    response_class=Response,
+    responses=PDF_RESPONSE,
+    summary="Purchase order PDF for the supplier",
+)
+def purchase_order_pdf(
+    po_id: uuid.UUID, principal: CurrentPrincipal, db: DbSession, download: bool = False
+) -> Response:
+    return _pdf(documents.purchase_order_pdf(db, principal, po_id), download)

@@ -15,6 +15,7 @@ from app.api.v1 import (
     job_cards,
     job_parts,
     organisation,
+    purchasing,
     quotations,
     reports,
     roles,
@@ -42,3 +43,4 @@ api_router.include_router(documents.router)
 api_router.include_router(reports.router)
 api_router.include_router(inventory.router)
 api_router.include_router(job_parts.router)
+api_router.include_router(purchasing.router)

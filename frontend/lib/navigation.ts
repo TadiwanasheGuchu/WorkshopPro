@@ -1,7 +1,7 @@
 import type { Me } from "./api/types";
 import { P, can, canInAnyBranch } from "./permissions";
 
-export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments" | "reports" | "parts" | "movements" | "locations";
+export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments" | "reports" | "parts" | "movements" | "locations" | "suppliers" | "purchase_orders";
 
 export interface NavItem {
   href: string;
@@ -52,16 +52,21 @@ export function navigationFor(me: Me): NavGroup[] {
   }
   if (workshop.length) groups.push({ label: "Workshop", items: workshop });
   if (customers.length) groups.push({ label: "Customers", items: customers });
+  const inventory: NavItem[] = [];
   if (canInAnyBranch(me, P.INVENTORY_VIEW)) {
-    groups.push({
-      label: "Inventory",
-      items: [
-        { href: "/inventory/parts", label: "Parts catalogue", icon: "parts" },
-        { href: "/inventory/movements", label: "Stock movements", icon: "movements" },
-        { href: "/inventory/locations", label: "Stock locations", icon: "locations" },
-      ],
-    });
+    inventory.push(
+      { href: "/inventory/parts", label: "Parts catalogue", icon: "parts" },
+      { href: "/inventory/movements", label: "Stock movements", icon: "movements" },
+      { href: "/inventory/locations", label: "Stock locations", icon: "locations" },
+    );
   }
+  if (canInAnyBranch(me, P.SUPPLIERS_VIEW)) {
+    inventory.push(
+      { href: "/suppliers", label: "Suppliers", icon: "suppliers" },
+      { href: "/purchase-orders", label: "Purchase orders", icon: "purchase_orders" },
+    );
+  }
+  if (inventory.length) groups.push({ label: "Inventory", items: inventory });
   const finance: NavItem[] = [];
   if (canInAnyBranch(me, P.QUOTATIONS_VIEW)) finance.push({ href: "/quotations", label: "Quotations", icon: "quotations" });
   if (canInAnyBranch(me, P.INVOICES_VIEW)) {

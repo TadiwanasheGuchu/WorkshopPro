@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Banknote, BarChart3, Boxes, Building2, CalendarDays, Car, ClipboardList, Contact, FileText, LayoutDashboard, Package, Receipt, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, Banknote, BarChart3, Boxes, Building2, CalendarDays, Car, ClipboardList, Contact, FileText, LayoutDashboard, Package, Receipt, ShoppingCart, Truck, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,6 +24,8 @@ const icons: Record<NavIcon, LucideIcon> = {
   parts: Package,
   movements: ArrowLeftRight,
   locations: Boxes,
+  suppliers: Truck,
+  purchase_orders: ShoppingCart,
 };
 
 function isActive(pathname: string, href: string, match: string[] = []): boolean {

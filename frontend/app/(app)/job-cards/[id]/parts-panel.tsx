@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import { PartPicker } from "@/components/app/part-picker";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -10,7 +11,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Panel } from "@/components/ui/page";
 import { api } from "@/lib/api/client";
 import { errorMessage } from "@/lib/api/errors";
-import type { JobParts, Page, PartListItem } from "@/lib/api/types";
+import type { JobParts, PartListItem } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import { newIdempotencyKey } from "@/lib/invoice";
 import { WHOLE_UNITS, qty } from "@/lib/inventory";
@@ -19,53 +20,6 @@ type Mode = "reserve" | "issue" | "return";
 
 const TITLES: Record<Mode, string> = { reserve: "Reserve parts", issue: "Issue parts", return: "Return parts to stock" };
 const PATHS: Record<Mode, string> = { reserve: "reservations", issue: "issues", return: "returns" };
-
-/** Search the catalogue by SKU or name. Stock shown is across the user's branches. */
-function PartPicker({ value, onChange }: { value: PartListItem | null; onChange: (p: PartListItem | null) => void }) {
-  const [term, setTerm] = useState("");
-  const [results, setResults] = useState<PartListItem[]>([]);
-  useEffect(() => {
-    if (term.trim().length < 2) return;
-    const t = setTimeout(() => {
-      void api<Page<PartListItem>>("GET", `/inventory/parts?search=${encodeURIComponent(term.trim())}&page_size=8`)
-        .then((r) => setResults(r.items))
-        .catch(() => setResults([]));
-    }, 250);
-    return () => clearTimeout(t);
-  }, [term]);
-
-  if (value) {
-    return (
-      <div className="flex items-center justify-between gap-2 rounded-control border border-border px-3 py-2 text-sm">
-        <span>
-          <span className="font-mono">{value.sku}</span> {value.name}
-        </span>
-        <Button size="sm" variant="ghost" onClick={() => onChange(null)}>
-          Change
-        </Button>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-1">
-      <Input aria-label="Search parts" placeholder="Search SKU or name" value={term} onChange={(e) => setTerm(e.target.value)} autoFocus />
-      {term.trim().length >= 2 && results.length ? (
-        <ul className="max-h-56 divide-y divide-border overflow-y-auto rounded-control border border-border">
-          {results.map((p) => (
-            <li key={p.id}>
-              <button type="button" className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-mist" onClick={() => onChange(p)}>
-                <span>
-                  <span className="font-mono">{p.sku}</span> {p.name}
-                </span>
-                <span className="font-mono text-xs text-muted">{qty(p.stock.available)} avail.</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
-  );
-}
 
 function PartsDialog({ mode, jobId, parts, onClose, initialPart }: { mode: Mode; jobId: string; parts: JobParts; onClose: () => void; initialPart?: PartListItem | null }) {
   const router = useRouter();

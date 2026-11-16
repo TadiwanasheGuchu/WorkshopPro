@@ -62,6 +62,11 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `inventory.adjust` | branch | Opening stock, stocktake adjustments, minimum levels, stock locations; see cost prices |
 | `inventory.transfer` | branch | Transfer stock; needed in both the sending and receiving branch |
 | `inventory.issue` | branch | Reserve, issue and return parts for authorised jobs; release reservations |
+| `suppliers.view` | branch | Suppliers, their part codes and prices; the branch's purchase orders |
+| `suppliers.manage` | organisation | Add and edit suppliers and their part codes |
+| `purchasing.manage` | branch | Prepare and edit draft purchase orders; cancel; close short |
+| `purchasing.approve` | branch | Approve draft purchase orders |
+| `purchasing.receive` | branch | Receive deliveries into stock; return goods to suppliers |
 
 Viewing an inspection or its photos follows job card visibility: anyone who can see the job can see them.
 
@@ -80,7 +85,7 @@ The transition table lives in `backend/app/services/job_workflow.py`. Assigned m
 | Workshop manager | `branches.view`, `users.view`, customers and vehicles (view + manage) | job cards, inspections, scheduling, reports |
 | Service advisor | `branches.view`, customers and vehicles (view + manage) | bookings, quotations, invoices (view, manage), payments (record) |
 | Mechanic | `branches.view`, `customers.view`, `vehicles.view` | assigned jobs, inspections |
-| Inventory manager | `branches.view`, `job_cards.view`, all `inventory.*` | suppliers, purchasing |
+| Inventory manager | `branches.view`, `job_cards.view`, all `inventory.*`, `suppliers.view`, `suppliers.manage`, `purchasing.manage`, `purchasing.receive` | — (approval sits with workshop managers and administrators) |
 | Accounts / cashier | `branches.view`, `customers.view`, `vehicles.view` | invoices, credit notes, payments, refunds, financial report |
 
 ## Adding a permission

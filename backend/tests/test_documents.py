@@ -253,3 +253,43 @@ def test_public_quotation_pdf(
     db.execute(update(QuotationLink).values(expires_at=utcnow()))
     db.commit()
     assert customer.post("/public/quotations/pdf", json={"token": token}).status_code == 404
+
+
+def test_purchase_order_pdf(owner_api: Api, org: OrgFixture, new_api: Any) -> None:
+    from tests.test_inventory import _part
+    from tests.test_purchasing import _approve, _order, _supplier
+
+    supplier = _supplier(owner_api)
+    owner_api.patch(
+        f"/suppliers/{supplier['id']}",
+        json={"account_number": "ACC-77", "address": "4 Iron St\nWindhoek"},
+    )
+    part = _part(owner_api)
+    owner_api.put(
+        f"/suppliers/{supplier['id']}/parts/{part['id']}", json={"supplier_sku": "WAP-778"}
+    )
+    po = _order(
+        owner_api, org, supplier, [{"part_id": part["id"], "quantity": "4", "unit_cost": "500.00"}]
+    )
+    draft = _text(owner_api.get(f"/purchase-orders/{po['id']}/pdf"))
+    assert "Do not supply against this order" in draft
+    _approve(owner_api, po)
+    text = _text(owner_api.get(f"/purchase-orders/{po['id']}/pdf"))
+    for expected in (
+        "Purchase order",
+        "PO-000001",
+        "Supplier",
+        "Windhoek Auto Parts",
+        "4 Iron St",
+        "WAP-778",
+        "N$ 2,000.00",
+        "ACC-77",
+        "Deliver to",
+        "Main branch",
+    ):
+        assert expected in text, expected
+    assert "Do not supply" not in text
+    org.add_user("mech@example.com", [(org.role("mechanic"), org.branch_id)])
+    mech: Api = new_api()
+    mech.login("mech@example.com")
+    assert mech.get(f"/purchase-orders/{po['id']}/pdf").status_code == 404

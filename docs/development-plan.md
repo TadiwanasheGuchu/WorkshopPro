@@ -99,8 +99,8 @@ Rules worth knowing:
 |---|---|---|
 | 4a | Parts catalogue (categories, units, cost and selling price, tax), stock locations per branch (default store created with every branch), append-only stock movement ledger maintained by database trigger, opening stock and stocktake adjustments with mandatory reason, transfers of available stock, minimum levels and low-stock filter, movement ledger screen. Every stock-changing request needs an Idempotency-Key. | done |
 | 4b | Reserve stock for authorised jobs (approved quotation or approval exception), issue parts when fitted (drawing on the job's reservations first), returns limited to what was issued, manual release, automatic release when a job is completed or cancelled; Parts panel on the job card | done |
-| 4c | Suppliers, supplier part references, purchase orders with approval, goods received notes with partial deliveries, supplier returns | next |
-| 4d | Stock valuation, ledger reconciliation and purchasing reports | planned |
+| 4c | Suppliers with their part codes, prices and lead times; purchase orders (draft, approved, partly received, received, closed short, cancelled) with approval; goods received notes for partial deliveries with delivery-note and supplier-invoice references and discrepancy notes; returns to supplier; purchase order PDF | done |
+| 4d | Stock valuation, ledger reconciliation and purchasing reports | next |
 
 Rules worth knowing:
 - `stock_movements` is the source of truth. `stock_levels.on_hand` changes only through the movement trigger (`stock_movement_apply`); direct updates, deletes and edits to movements are rejected by the database.
@@ -109,6 +109,9 @@ Rules worth knowing:
 - The parts catalogue is organisation-wide: managing it (`inventory.catalogue`) needs an organisation-wide role. Stock is per branch.
 - Cost prices are shown only to users who manage the catalogue or adjust stock.
 - `stock_levels.reserved` equals the outstanding total of open `stock_reservations` for the part and location; the tests assert this. Parts must come from a location in the job's branch.
+- Receiving never exceeds what is outstanding on the order line. Each delivery adds stock through the ledger at the order line's cost, and sets the part's cost price and the supplier's last cost to that cost (stock is valued at cost price, which therefore follows the last received cost).
+- Returns to supplier are limited to what was received on the line, net of earlier returns, and to free stock at the chosen location.
+- Purchase order amounts exclude tax. Supplier payments and balances owed to suppliers are not recorded (WorkshopPro is not a general ledger); GRNs keep the supplier's invoice reference for reconciliation in the accounting system.
 - Issued parts are not added to invoices automatically yet: the invoice is prefilled from the approved quotation, and the Parts panel shows what was fitted so staff can reconcile before issuing.
 
 ## Phase 5 — Customer experience and communications — `planned`

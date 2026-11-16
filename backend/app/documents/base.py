@@ -134,6 +134,7 @@ class Document:
     vehicle: list[tuple[str, str]] = field(default_factory=list)
     notice: str | None = None
     body: list[Flowable] = field(default_factory=list)
+    party_label: str = "Customer"
 
     def render(self) -> bytes:
         buffer = BytesIO()
@@ -198,7 +199,7 @@ class Document:
         cells: list[list[Flowable]] = []
         if self.customer:
             cells.append(
-                [p("Customer", "label"), p(self.customer.name, "bold")]
+                [p(self.party_label, "label"), p(self.customer.name, "bold")]
                 + [p(line) for line in self.customer.lines]
             )
         if self.vehicle:

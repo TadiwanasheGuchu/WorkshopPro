@@ -19,6 +19,7 @@ from app.documents.base import OrgInfo, Party
 from app.documents.commercial import CreditNoteLine, VehicleInfo
 from app.integrations.storage import ObjectStorage
 from app.models import (
+    Branch,
     CreditNote,
     CreditNoteItem,
     Customer,
@@ -30,11 +31,12 @@ from app.models import (
     Organisation,
     OrganisationSettings,
     StoredFile,
+    Supplier,
     Vehicle,
 )
 from app.permissions.principal import Principal
 from app.schemas.quotation import QuotationRead
-from app.services import inspections, invoices, payments, quotations
+from app.services import inspections, invoices, payments, purchasing, quotations
 
 
 @dataclass(frozen=True)
@@ -224,3 +226,28 @@ def inspection_pdf(
         load,
     )
     return Pdf(f"inspection-{_safe(ins.job_card['job_number'])}.pdf", content)
+
+
+def purchase_order_pdf(db: Session, principal: Principal, po_id: uuid.UUID) -> Pdf:
+    po = purchasing.get_order(db, principal, po_id)
+    s = db.get_one(Supplier, po.supplier.id)
+    supplier = Party(
+        name=s.name,
+        lines=[
+            x
+            for x in (
+                f"Attention: {s.contact_person}" if s.contact_person else None,
+                *(s.address.splitlines() if s.address else []),
+                s.phone,
+                s.email,
+            )
+            if x
+        ],
+    )
+    b = db.get_one(Branch, po.branch.id)
+    place = " ".join(x for x in (b.postal_code, b.city) if x)
+    deliver_to = [x for x in (b.name, b.address_line1, b.address_line2, place, b.phone) if x]
+    content = commercial.purchase_order(
+        org_info(db, principal.organisation_id), po, supplier, deliver_to, s.account_number
+    )
+    return Pdf(f"{_safe(po.po_number)}.pdf", content)

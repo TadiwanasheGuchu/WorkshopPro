@@ -66,6 +66,11 @@ class P(StrEnum):
     INVENTORY_ADJUST = "inventory.adjust"
     INVENTORY_TRANSFER = "inventory.transfer"
     INVENTORY_ISSUE = "inventory.issue"
+    SUPPLIERS_VIEW = "suppliers.view"
+    SUPPLIERS_MANAGE = "suppliers.manage"
+    PURCHASING_MANAGE = "purchasing.manage"
+    PURCHASING_APPROVE = "purchasing.approve"
+    PURCHASING_RECEIVE = "purchasing.receive"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -344,6 +349,41 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "Reserve stock for authorised jobs, issue parts that are fitted, and take returns.",
         Scope.BRANCH,
     ),
+    PermissionDef(
+        P.SUPPLIERS_VIEW,
+        "Suppliers and purchasing",
+        "View suppliers and purchase orders",
+        "See suppliers, their part codes and prices, and the branch's purchase orders.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.SUPPLIERS_MANAGE,
+        "Suppliers and purchasing",
+        "Manage suppliers",
+        "Add and edit suppliers and their part codes for the organisation.",
+        Scope.ORGANISATION,
+    ),
+    PermissionDef(
+        P.PURCHASING_MANAGE,
+        "Suppliers and purchasing",
+        "Prepare purchase orders",
+        "Create and edit draft purchase orders, cancel orders and close them short.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.PURCHASING_APPROVE,
+        "Suppliers and purchasing",
+        "Approve purchase orders",
+        "Approve a draft purchase order so it can be sent to the supplier.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.PURCHASING_RECEIVE,
+        "Suppliers and purchasing",
+        "Receive goods and return to suppliers",
+        "Record deliveries into stock (goods received notes) and returns to suppliers.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -408,6 +448,9 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INVENTORY_VIEW,
                 P.INVENTORY_TRANSFER,
                 P.INVENTORY_ISSUE,
+                P.SUPPLIERS_VIEW,
+                P.PURCHASING_APPROVE,
+                P.PURCHASING_RECEIVE,
             }
         ),
     ),
@@ -467,6 +510,10 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INVENTORY_ADJUST,
                 P.INVENTORY_TRANSFER,
                 P.INVENTORY_ISSUE,
+                P.SUPPLIERS_VIEW,
+                P.SUPPLIERS_MANAGE,
+                P.PURCHASING_MANAGE,
+                P.PURCHASING_RECEIVE,
             }
         ),
     ),
@@ -488,6 +535,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.PAYMENTS_REFUND,
                 P.REPORTS_FINANCIAL,
                 P.INVENTORY_VIEW,
+                P.SUPPLIERS_VIEW,
             }
         ),
     ),

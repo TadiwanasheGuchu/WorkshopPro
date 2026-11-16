@@ -872,3 +872,79 @@ export interface JobParts {
   used: { part: Ref; sku: string; unit: PartUnit; issued: string; selling_price: string; value: string }[];
   movements: StockMovement[];
 }
+
+// --------------------------------------------------------------------------- purchasing
+
+export type PoStatus = "draft" | "approved" | "partially_received" | "received" | "closed" | "cancelled";
+
+export interface SupplierListItem {
+  id: UUID;
+  name: string;
+  contact_person: string | null;
+  phone: string | null;
+  email: string | null;
+  archived_at: string | null;
+  open_orders: number;
+}
+
+export interface Supplier extends SupplierListItem {
+  address: string | null;
+  tax_number: string | null;
+  account_number: string | null;
+  payment_terms_days: number;
+  notes: string | null;
+  parts: { part: Ref; sku: string; unit: PartUnit; supplier_sku: string | null; last_cost: string | null; lead_time_days: number | null }[];
+  received_value_90_days: string;
+  capabilities: { edit: boolean; archive: boolean };
+}
+
+export interface PoListItem {
+  id: UUID;
+  po_number: string;
+  status: PoStatus;
+  supplier: Ref;
+  branch: Ref;
+  expected_date: string | null;
+  is_overdue: boolean;
+  total: string;
+  currency_code: string;
+  created_at: string;
+}
+
+export interface PoLine {
+  id: UUID;
+  part: Ref;
+  sku: string;
+  unit: PartUnit;
+  supplier_sku: string | null;
+  quantity_ordered: string;
+  quantity_received: string;
+  quantity_returned: string;
+  outstanding: string;
+  unit_cost: string;
+  line_total: string;
+}
+
+export interface GrnLine {
+  part: Ref;
+  sku: string;
+  quantity: string;
+  unit_cost: string;
+  discrepancy: string | null;
+}
+
+export interface PurchaseOrder extends PoListItem {
+  notes: string | null;
+  received_value: string;
+  returned_value: string;
+  lines: PoLine[];
+  receipts: { id: UUID; grn_number: string; location: Ref; received_at: string; received_by: string; delivery_reference: string | null; supplier_invoice_reference: string | null; notes: string | null; total: string; lines: GrnLine[] }[];
+  returns: { id: UUID; location: Ref; reason: string; reference: string | null; total: string; created_by: string; created_at: string; lines: GrnLine[] }[];
+  created_by: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  closed_reason: string | null;
+  version: number;
+  locations: Ref[];
+  capabilities: { edit: boolean; approve: boolean; receive: boolean; return_goods: boolean; cancel: boolean; close: boolean };
+}

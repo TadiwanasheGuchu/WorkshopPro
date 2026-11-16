@@ -40,6 +40,11 @@ export const P = {
   INVENTORY_ADJUST: "inventory.adjust",
   INVENTORY_TRANSFER: "inventory.transfer",
   INVENTORY_ISSUE: "inventory.issue",
+  SUPPLIERS_VIEW: "suppliers.view",
+  SUPPLIERS_MANAGE: "suppliers.manage",
+  PURCHASING_MANAGE: "purchasing.manage",
+  PURCHASING_APPROVE: "purchasing.approve",
+  PURCHASING_RECEIVE: "purchasing.receive",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];
