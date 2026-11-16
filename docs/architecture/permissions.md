@@ -47,6 +47,10 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `appointments.view` | branch | View the branch booking calendar |
 | `appointments.manage` | branch | Book, reschedule, cancel, mark no-show, check in |
 
+| `quotations.view` | branch | View quotations, versions and decisions |
+| `quotations.manage` | branch | Prepare, send, revise quotations; read tax rates |
+| `quotations.record_decision` | branch | Record a customer's approval/rejection given offline, with evidence |
+
 Viewing an inspection or its photos follows job card visibility: anyone who can see the job can see them.
 
 \* Customers and vehicles are shared by the whole organisation. A grant in **any** branch gives access to all of them (`Principal.require_in_any_branch`), so a branch-limited service advisor can serve a customer who first visited another branch.

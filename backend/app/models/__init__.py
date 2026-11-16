@@ -45,6 +45,13 @@ from app.models.organisation import (
     OrganisationSettings,
     TaxRate,
 )
+from app.models.quotation import (
+    Quotation,
+    QuotationDecision,
+    QuotationItem,
+    QuotationLink,
+    QuotationVersion,
+)
 
 __all__ = [
     "Appointment",
@@ -70,6 +77,11 @@ __all__ = [
     "JobStatusHistory",
     "Organisation",
     "OrganisationSettings",
+    "Quotation",
+    "QuotationDecision",
+    "QuotationItem",
+    "QuotationLink",
+    "QuotationVersion",
     "Role",
     "RolePermission",
     "ServiceBay",

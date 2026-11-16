@@ -66,6 +66,8 @@ export interface OrganisationSettings {
   date_format: DateFormat;
   prices_include_tax: boolean;
   document_footer: string | null;
+  quotation_validity_days: number;
+  quotation_terms: string | null;
 }
 
 export interface TaxRate {
@@ -364,7 +366,7 @@ export interface JobCardDetail extends JobCardSummary {
   handover_notes: string | null;
   cancellation_reason: string | null;
   version: number;
-  approval_status: "not_required_yet" | "exception_active" | "missing";
+  approval_status: "not_required_yet" | "quotation_approved" | "exception_active" | "missing";
   assignments: { user: Ref; assigned_at: string; assigned_by: string | null; unassigned_at: string | null }[];
   status_history: { from_status: JobStatus | null; to_status: JobStatus; note: string | null; changed_at: string; changed_by: string | null }[];
   notes: { id: UUID; body: string; visibility: "internal" | "customer"; author: string | null; created_at: string }[];
@@ -508,4 +510,105 @@ export interface DaySchedule {
   is_closed: boolean;
   bays: Ref[];
   appointments: Appointment[];
+}
+
+// --------------------------------------------------------------------------- quotations
+
+export type QuoteStatus = "draft" | "sent" | "approved" | "rejected" | "superseded" | "withdrawn" | "expired";
+export type LineKind = "labour" | "part" | "fee" | "discount";
+
+export interface QuoteItem {
+  id: UUID;
+  kind: LineKind;
+  description: string;
+  part_number: string | null;
+  quantity: string;
+  unit_price: string;
+  tax_rate_id: UUID | null;
+  tax_rate_name: string | null;
+  tax_rate_percent: string;
+  line_subtotal: string;
+  line_tax: string;
+  line_total: string;
+}
+
+export interface QuoteVersion {
+  id: UUID;
+  version_number: number;
+  status: QuoteStatus;
+  currency_code: string;
+  prices_include_tax: boolean;
+  valid_until: string | null;
+  terms: string | null;
+  notes: string | null;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  sent_at: string | null;
+  sent_by: string | null;
+  created_at: string;
+  revision_reason: string | null;
+  items: QuoteItem[];
+  decision: {
+    decision: "approved" | "rejected";
+    method: string;
+    total: string;
+    currency_code: string;
+    customer_name: string;
+    evidence: string | null;
+    comments: string | null;
+    recorded_by: string | null;
+    decided_at: string;
+  } | null;
+  link: { expires_at: string; first_viewed_at: string | null; last_viewed_at: string | null; view_count: number; used_at: string | null; revoked_at: string | null } | null;
+}
+
+export interface Quotation {
+  id: UUID;
+  quote_number: string;
+  branch: Ref;
+  job_card: Ref;
+  customer: Ref;
+  customer_email: string | null;
+  vehicle: JobCardSummary["vehicle"];
+  current: QuoteVersion;
+  versions: { id: UUID; version_number: number; status: QuoteStatus; total: string; sent_at: string | null }[];
+  capabilities: { edit: boolean; send: boolean; revise: boolean; record_decision: boolean };
+}
+
+export interface QuotationListItem {
+  id: UUID;
+  quote_number: string;
+  version_number: number;
+  status: QuoteStatus;
+  total: string;
+  currency_code: string;
+  customer: Ref;
+  vehicle: JobCardSummary["vehicle"];
+  job_card: Ref;
+  updated_at: string;
+}
+
+export interface PublicQuotation {
+  organisation_name: string;
+  organisation_phone: string | null;
+  organisation_email: string | null;
+  branch_name: string;
+  quote_number: string;
+  version_number: number;
+  status: QuoteStatus;
+  customer_name: string;
+  vehicle: string;
+  currency_code: string;
+  prices_include_tax: boolean;
+  items: { kind: LineKind; description: string; quantity: string; unit_price: string; tax_rate_percent: string; line_total: string }[];
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  valid_until: string | null;
+  terms: string | null;
+  notes: string | null;
+  can_decide: boolean;
+  decision: "approved" | "rejected" | null;
+  decided_at: string | null;
 }

@@ -11,6 +11,7 @@ from app.api.v1 import (
     inspections,
     job_cards,
     organisation,
+    quotations,
     roles,
     users,
     vehicles,
@@ -30,3 +31,4 @@ api_router.include_router(job_cards.router)
 api_router.include_router(inspections.router)
 api_router.include_router(files.router)
 api_router.include_router(appointments.router)
+api_router.include_router(quotations.router)

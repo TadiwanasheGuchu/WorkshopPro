@@ -69,16 +69,28 @@ class SettingsRead(ReadSchema):
     date_format: str
     prices_include_tax: bool
     document_footer: str | None
+    quotation_validity_days: int
+    quotation_terms: str | None
 
 
 class SettingsUpdate(UpdateSchema):
-    non_nullable = frozenset({"currency_code", "timezone", "date_format", "prices_include_tax"})
+    non_nullable = frozenset(
+        {
+            "currency_code",
+            "timezone",
+            "date_format",
+            "prices_include_tax",
+            "quotation_validity_days",
+        }
+    )
 
     currency_code: CurrencyCode | None = None
     timezone: Timezone | None = None
     date_format: DateFormat | None = None
     prices_include_tax: bool | None = None
     document_footer: OptionalStr = Field(None, max_length=1000)
+    quotation_validity_days: int | None = Field(None, ge=1, le=365)
+    quotation_terms: OptionalStr = Field(None, max_length=4000)
 
 
 class TaxRateRead(ReadSchema):

@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { DetailList, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { JobCardDetail } from "@/lib/api/types";
+import type { JobCardDetail, Quotation } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { EXCEPTION_TYPE_LABEL, FUEL_LEVEL_LABEL, JOB_STATUS_LABEL, PRIORITY_LABEL } from "@/lib/job-status";
@@ -24,6 +24,7 @@ import {
   WorkRecord,
 } from "./job-actions";
 import { InspectionList, StartInspectionButton } from "./inspections-panel";
+import { PrepareQuotationButton, QuotationSummary } from "./quotation-panel";
 
 export const metadata: Metadata = { title: "Job card" };
 
@@ -44,6 +45,8 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
   const caps = job.capabilities;
   const activeExceptions = job.approval_exceptions.filter((e) => !e.revoked_at);
   const canPerform = can(me, P.INSPECTIONS_PERFORM, job.branch.id);
+  const canViewQuotes = can(me, P.QUOTATIONS_VIEW, job.branch.id);
+  const quote = canViewQuotes ? await apiGet<Quotation | null>(`/job-cards/${job.id}/quotation`) : null;
 
   return (
     <>
@@ -114,6 +117,20 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
             <WorkRecord key={job.version} job={job} />
           </Panel>
 
+          {canViewQuotes ? (
+            <Panel
+              title="Quotation"
+              flush
+              actions={
+                !quote && can(me, P.QUOTATIONS_MANAGE, job.branch.id) && !["completed", "cancelled"].includes(job.status) ? (
+                  <PrepareQuotationButton jobId={job.id} />
+                ) : null
+              }
+            >
+              {quote ? <QuotationSummary quote={quote} /> : <p className="px-4 py-3 text-sm text-muted">No quotation yet.</p>}
+            </Panel>
+          ) : null}
+
           <Panel
             title="Customer approval"
             description="Chargeable work needs an approved quotation or an authorised exception."
@@ -121,14 +138,15 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
             flush
           >
             <div className="px-4 py-3">
-              {job.approval_status === "exception_active" ? (
+              {job.approval_status === "quotation_approved" ? (
+                <StatusBadge tone="success">Quotation approved by customer</StatusBadge>
+              ) : job.approval_status === "exception_active" ? (
                 <StatusBadge tone="success">Work authorised by exception</StatusBadge>
               ) : job.approval_status === "missing" ? (
                 <StatusBadge tone="danger">No approval on record</StatusBadge>
               ) : (
                 <StatusBadge tone="neutral">Not yet approved</StatusBadge>
               )}
-              <p className="mt-1.5 text-xs text-muted">Quotations and customer approvals are added in the next release.</p>
             </div>
             {job.approval_exceptions.length ? (
               <ul className="divide-y divide-border border-t border-border">

@@ -25,6 +25,9 @@ export const P = {
   INSPECTION_TEMPLATES_MANAGE: "inspection_templates.manage",
   APPOINTMENTS_VIEW: "appointments.view",
   APPOINTMENTS_MANAGE: "appointments.manage",
+  QUOTATIONS_VIEW: "quotations.view",
+  QUOTATIONS_MANAGE: "quotations.manage",
+  QUOTATIONS_RECORD_DECISION: "quotations.record_decision",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];

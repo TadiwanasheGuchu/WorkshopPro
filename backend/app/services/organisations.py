@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.errors import ConflictError, NotFoundError
+from app.core.errors import ConflictError, NotFoundError, PermissionDeniedError
 from app.core.security import hash_password
 from app.core.time import utcnow
 from app.models import (
@@ -170,7 +170,9 @@ def update_settings(
 
 
 def list_tax_rates(db: Session, principal: Principal) -> list[TaxRate]:
-    principal.require(P.SETTINGS_VIEW)
+    # People preparing quotations need to pick a rate; editing rates still needs settings.manage.
+    if not (principal.can(P.SETTINGS_VIEW) or principal.can_in_any_branch(P.QUOTATIONS_MANAGE)):
+        raise PermissionDeniedError("You do not have permission to view tax rates.")
     return list(
         db.scalars(
             select(TaxRate)

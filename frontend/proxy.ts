@@ -8,7 +8,7 @@ import { NextResponse, type NextRequest } from "next/server";
  *    shortcut only: the API validates the session on every request.
  */
 
-const PUBLIC_PATHS = ["/sign-in", "/forgot-password", "/reset-password", "/accept-invitation"];
+const PUBLIC_PATHS = ["/sign-in", "/forgot-password", "/reset-password", "/accept-invitation", "/quote"];
 
 function apiOrigin(): string {
   return (process.env.API_INTERNAL_URL ?? "http://localhost:8000").replace(/\/$/, "");

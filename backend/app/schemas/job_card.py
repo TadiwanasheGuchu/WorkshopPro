@@ -196,7 +196,9 @@ class JobCardDetail(JobCardSummary):
     handover_notes: str | None
     cancellation_reason: str | None
     version: int
-    approval_status: Literal["not_required_yet", "exception_active", "missing"]
+    approval_status: Literal[
+        "not_required_yet", "quotation_approved", "exception_active", "missing"
+    ]
     assignments: list[AssignmentRead]
     status_history: list[StatusChange]
     notes: list[NoteRead]

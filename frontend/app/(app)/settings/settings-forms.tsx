@@ -100,6 +100,11 @@ const prefsSchema = z.object({
   date_format: z.enum(["DD/MM/YYYY", "YYYY-MM-DD", "MM/DD/YYYY"]),
   prices_include_tax: z.boolean(),
   document_footer: z.string().max(1000),
+  quotation_validity_days: z
+    .string()
+    .regex(/^\d{1,3}$/, "Whole days only.")
+    .refine((v) => Number(v) >= 1 && Number(v) <= 365, "Between 1 and 365 days."),
+  quotation_terms: z.string().max(4000),
 });
 type PrefsValues = z.infer<typeof prefsSchema>;
 
@@ -108,7 +113,12 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
   const [message, setMessage] = useState<Message>(null);
   const form = useForm<PrefsValues>({
     resolver: zodResolver(prefsSchema),
-    defaultValues: { ...settings, document_footer: settings.document_footer ?? "" },
+    defaultValues: {
+      ...settings,
+      document_footer: settings.document_footer ?? "",
+      quotation_validity_days: String(settings.quotation_validity_days),
+      quotation_terms: settings.quotation_terms ?? "",
+    },
   });
   const { errors, isSubmitting, isDirty } = form.formState;
   const timezones = TIMEZONES.includes(settings.timezone) ? TIMEZONES : [settings.timezone, ...TIMEZONES];
@@ -116,7 +126,12 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
   async function onSubmit(values: PrefsValues) {
     setMessage(null);
     try {
-      await api("PATCH", "/organisation/settings", { ...values, document_footer: values.document_footer.trim() || null });
+      await api("PATCH", "/organisation/settings", {
+        ...values,
+        document_footer: values.document_footer.trim() || null,
+        quotation_validity_days: Number(values.quotation_validity_days),
+        quotation_terms: values.quotation_terms.trim() || null,
+      });
       form.reset(values);
       setMessage({ tone: "success", text: "Preferences saved." });
       router.refresh();
@@ -160,6 +175,14 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
       />
       <Field label="Document footer" hint="Printed at the bottom of quotations and invoices, e.g. banking details." error={errors.document_footer?.message}>
         {(p) => <Textarea {...p} rows={3} disabled={readOnly} {...form.register("document_footer")} />}
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Quotations valid for (days)" error={errors.quotation_validity_days?.message}>
+          {(p) => <Input {...p} type="number" min={1} max={365} disabled={readOnly} {...form.register("quotation_validity_days")} />}
+        </Field>
+      </div>
+      <Field label="Default quotation terms" hint="Copied onto new quotations; editable per quotation." error={errors.quotation_terms?.message}>
+        {(p) => <Textarea {...p} rows={3} disabled={readOnly} {...form.register("quotation_terms")} />}
       </Field>
       {readOnly ? null : (
         <Button type="submit" variant="primary" loading={isSubmitting} disabled={!isDirty}>

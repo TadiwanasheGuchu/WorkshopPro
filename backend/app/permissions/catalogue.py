@@ -51,6 +51,9 @@ class P(StrEnum):
     INSPECTION_TEMPLATES_MANAGE = "inspection_templates.manage"
     APPOINTMENTS_VIEW = "appointments.view"
     APPOINTMENTS_MANAGE = "appointments.manage"
+    QUOTATIONS_VIEW = "quotations.view"
+    QUOTATIONS_MANAGE = "quotations.manage"
+    QUOTATIONS_RECORD_DECISION = "quotations.record_decision"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -222,6 +225,28 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "Book, reschedule, cancel and check in appointments.",
         Scope.BRANCH,
     ),
+    PermissionDef(
+        P.QUOTATIONS_VIEW,
+        "Quotations",
+        "View quotations",
+        "View quotations, versions, totals and customer decisions.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.QUOTATIONS_MANAGE,
+        "Quotations",
+        "Prepare and send quotations",
+        "Create quotations, edit drafts, send them to customers and create revisions.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.QUOTATIONS_RECORD_DECISION,
+        "Quotations",
+        "Record customer approval",
+        "Record a customer's approval or rejection given in person, by phone or message, "
+        "with evidence.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -273,6 +298,9 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INSPECTIONS_AMEND,
                 P.APPOINTMENTS_VIEW,
                 P.APPOINTMENTS_MANAGE,
+                P.QUOTATIONS_VIEW,
+                P.QUOTATIONS_MANAGE,
+                P.QUOTATIONS_RECORD_DECISION,
             }
         ),
     ),
@@ -293,6 +321,9 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INSPECTIONS_PERFORM,
                 P.APPOINTMENTS_VIEW,
                 P.APPOINTMENTS_MANAGE,
+                P.QUOTATIONS_VIEW,
+                P.QUOTATIONS_MANAGE,
+                P.QUOTATIONS_RECORD_DECISION,
             }
         ),
     ),
@@ -321,6 +352,14 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "accounts",
         "Accounts / cashier",
         "Handles invoices, payments and receipts.",
-        frozenset({P.BRANCHES_VIEW, P.CUSTOMERS_VIEW, P.VEHICLES_VIEW, P.JOB_CARDS_VIEW}),
+        frozenset(
+            {
+                P.BRANCHES_VIEW,
+                P.CUSTOMERS_VIEW,
+                P.VEHICLES_VIEW,
+                P.JOB_CARDS_VIEW,
+                P.QUOTATIONS_VIEW,
+            }
+        ),
     ),
 )

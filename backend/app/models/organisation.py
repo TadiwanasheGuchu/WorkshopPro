@@ -56,6 +56,8 @@ class OrganisationSettings(TimestampMixin, Base):
     date_format: Mapped[str] = mapped_column(String(10), server_default="DD/MM/YYYY")
     prices_include_tax: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     document_footer: Mapped[str | None] = mapped_column(Text)
+    quotation_validity_days: Mapped[int] = mapped_column(Integer, server_default="14")
+    quotation_terms: Mapped[str | None] = mapped_column(Text)
 
 
 class TaxRate(UUIDPrimaryKeyMixin, TimestampMixin, Base):

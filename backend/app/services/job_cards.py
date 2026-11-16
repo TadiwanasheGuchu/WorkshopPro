@@ -33,6 +33,8 @@ from app.models import (
     JobNote,
     JobStatusHistory,
     OrganisationSettings,
+    Quotation,
+    QuotationVersion,
     ServiceBay,
     User,
     Vehicle,
@@ -165,6 +167,21 @@ def _check_version(job: JobCard, version: int) -> None:
 def _require_open(job: JobCard) -> None:
     if JobStatus(job.status) in TERMINAL:
         raise ConflictError(f"Job {job.job_number} is {LABELS[JobStatus(job.status)].lower()}.")
+
+
+def has_approved_quotation(db: Session, job_id: uuid.UUID) -> bool:
+    return bool(
+        db.scalar(
+            select(QuotationVersion.id)
+            .join(Quotation, Quotation.id == QuotationVersion.quotation_id)
+            .where(Quotation.job_card_id == job_id, QuotationVersion.status == "approved")
+        )
+    )
+
+
+def _has_customer_approval(db: Session, job_id: uuid.UUID) -> bool:
+    """Approved current quotation, or an active authorised exception (CLAUDE.md §3.4)."""
+    return has_approved_quotation(db, job_id) or _has_active_exception(db, job_id)
 
 
 def _has_active_exception(db: Session, job_id: uuid.UUID) -> bool:
@@ -357,7 +374,7 @@ def _capabilities(db: Session, principal: Principal, job: JobCard, assigned: boo
     is_open = current not in TERMINAL
     manage = principal.can(P.JOB_CARDS_MANAGE, job.branch_id)
     work = assigned and principal.can(P.JOB_CARDS_WORK, job.branch_id)
-    has_exception = _has_active_exception(db, job.id)
+    has_exception = _has_customer_approval(db, job.id)
     options = []
     for target in sorted(TRANSITIONS[current], key=list(JobStatus).index):
         if not _can_transition(principal, job, assigned, target):
@@ -429,7 +446,9 @@ def get_job_card(db: Session, principal: Principal, job_id: uuid.UUID) -> JobCar
     active_exception = any(e.revoked_at is None for e in exceptions)
     current = JobStatus(job.status)
     approval = (
-        "exception_active"
+        "quotation_approved"
+        if has_approved_quotation(db, job.id)
+        else "exception_active"
         if active_exception
         else "not_required_yet"
         if current
@@ -743,7 +762,7 @@ def transition(
         raise PermissionDeniedError(
             "You do not have permission to make this status change on this job."
         )
-    if needs_approval(current, target) and not _has_active_exception(db, job.id):
+    if needs_approval(current, target) and not _has_customer_approval(db, job.id):
         raise ApprovalRequiredError(
             "Chargeable work cannot start until the customer has approved the quotation, or an "
             "authorised user records an approval exception.",
