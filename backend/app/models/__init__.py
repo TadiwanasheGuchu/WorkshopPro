@@ -32,6 +32,14 @@ from app.models.inspection import (
     InspectionTemplateItem,
     StoredFile,
 )
+from app.models.invoice import (
+    CreditNote,
+    CreditNoteItem,
+    Invoice,
+    InvoiceItem,
+    Payment,
+    PaymentAllocation,
+)
 from app.models.job_card import (
     JobApprovalException,
     JobAssignment,
@@ -59,6 +67,8 @@ __all__ = [
     "Base",
     "Branch",
     "BranchOperatingHours",
+    "CreditNote",
+    "CreditNoteItem",
     "Customer",
     "CustomerAddress",
     "CustomerConsent",
@@ -70,6 +80,8 @@ __all__ = [
     "InspectionPhoto",
     "InspectionTemplate",
     "InspectionTemplateItem",
+    "Invoice",
+    "InvoiceItem",
     "JobApprovalException",
     "JobAssignment",
     "JobCard",
@@ -77,6 +89,8 @@ __all__ = [
     "JobStatusHistory",
     "Organisation",
     "OrganisationSettings",
+    "Payment",
+    "PaymentAllocation",
     "Quotation",
     "QuotationDecision",
     "QuotationItem",

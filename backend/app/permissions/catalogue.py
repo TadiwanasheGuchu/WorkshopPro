@@ -54,6 +54,11 @@ class P(StrEnum):
     QUOTATIONS_VIEW = "quotations.view"
     QUOTATIONS_MANAGE = "quotations.manage"
     QUOTATIONS_RECORD_DECISION = "quotations.record_decision"
+    INVOICES_VIEW = "invoices.view"
+    INVOICES_MANAGE = "invoices.manage"
+    INVOICES_CREDIT = "invoices.credit"
+    PAYMENTS_RECORD = "payments.record"
+    PAYMENTS_REFUND = "payments.refund"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -247,6 +252,41 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "with evidence.",
         Scope.BRANCH,
     ),
+    PermissionDef(
+        P.INVOICES_VIEW,
+        "Invoices and payments",
+        "View invoices and payments",
+        "View invoices, credit notes, payments, receipts and customer balances.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INVOICES_MANAGE,
+        "Invoices and payments",
+        "Prepare and issue invoices",
+        "Create and edit draft invoices and issue them. Issued invoices cannot be changed.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INVOICES_CREDIT,
+        "Invoices and payments",
+        "Issue credit notes",
+        "Reduce the amount owed on an issued invoice with a credit note and a reason.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.PAYMENTS_RECORD,
+        "Invoices and payments",
+        "Record payments",
+        "Record money received and allocate it to invoices; issue receipts.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.PAYMENTS_REFUND,
+        "Invoices and payments",
+        "Refund and reverse payments",
+        "Reverse a mistakenly recorded payment or refund an overpayment, with a reason.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -301,6 +341,11 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.QUOTATIONS_VIEW,
                 P.QUOTATIONS_MANAGE,
                 P.QUOTATIONS_RECORD_DECISION,
+                P.INVOICES_VIEW,
+                P.INVOICES_MANAGE,
+                P.INVOICES_CREDIT,
+                P.PAYMENTS_RECORD,
+                P.PAYMENTS_REFUND,
             }
         ),
     ),
@@ -324,6 +369,9 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.QUOTATIONS_VIEW,
                 P.QUOTATIONS_MANAGE,
                 P.QUOTATIONS_RECORD_DECISION,
+                P.INVOICES_VIEW,
+                P.INVOICES_MANAGE,
+                P.PAYMENTS_RECORD,
             }
         ),
     ),
@@ -359,6 +407,11 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.VEHICLES_VIEW,
                 P.JOB_CARDS_VIEW,
                 P.QUOTATIONS_VIEW,
+                P.INVOICES_VIEW,
+                P.INVOICES_MANAGE,
+                P.INVOICES_CREDIT,
+                P.PAYMENTS_RECORD,
+                P.PAYMENTS_REFUND,
             }
         ),
     ),

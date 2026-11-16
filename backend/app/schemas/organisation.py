@@ -71,6 +71,8 @@ class SettingsRead(ReadSchema):
     document_footer: str | None
     quotation_validity_days: int
     quotation_terms: str | None
+    invoice_payment_days: int
+    invoice_terms: str | None
 
 
 class SettingsUpdate(UpdateSchema):
@@ -81,6 +83,7 @@ class SettingsUpdate(UpdateSchema):
             "date_format",
             "prices_include_tax",
             "quotation_validity_days",
+            "invoice_payment_days",
         }
     )
 
@@ -91,6 +94,10 @@ class SettingsUpdate(UpdateSchema):
     document_footer: OptionalStr = Field(None, max_length=1000)
     quotation_validity_days: int | None = Field(None, ge=1, le=365)
     quotation_terms: OptionalStr = Field(None, max_length=4000)
+    invoice_payment_days: int | None = Field(
+        None, ge=0, le=365, description="Days after issue that an invoice falls due (0 = on issue)."
+    )
+    invoice_terms: OptionalStr = Field(None, max_length=4000)
 
 
 class TaxRateRead(ReadSchema):

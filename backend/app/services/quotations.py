@@ -34,7 +34,6 @@ from app.models import (
     QuotationItem,
     QuotationLink,
     QuotationVersion,
-    TaxRate,
     User,
     Vehicle,
 )
@@ -62,7 +61,7 @@ from app.schemas.quotation import (
 from app.services import audit, numbering
 from app.services.job_cards import get_visible_job_card
 from app.services.job_workflow import TERMINAL, JobStatus
-from app.services.money import line_amounts, sum_amounts
+from app.services.lines import ITEM_COLUMNS, price_lines
 
 LIVE = ("draft", "sent", "approved", "rejected")
 
@@ -420,49 +419,11 @@ def save_draft(
     v = current_version(db, q.id, lock=True)
     if v.status != "draft":
         raise ConflictError("Sent quotations cannot be edited. Create a revision instead.")
-    rate_ids = {i.tax_rate_id for i in body.items if i.tax_rate_id}
-    rates = {
-        r.id: r
-        for r in db.scalars(
-            select(TaxRate).where(
-                TaxRate.id.in_(rate_ids), TaxRate.organisation_id == q.organisation_id
-            )
-        )
-    }
-    for rid in rate_ids:
-        if rid not in rates or not rates[rid].is_active:
-            raise ConflictError("Choose an active tax rate.", details={"tax_rate_id": str(rid)})
-
+    priced, totals = price_lines(
+        db, q.organisation_id, body.items, prices_include_tax=v.prices_include_tax
+    )
     db.query(QuotationItem).filter(QuotationItem.version_id == v.id).delete()
-    amounts = []
-    for pos, i in enumerate(body.items):
-        rate = rates.get(i.tax_rate_id) if i.tax_rate_id else None
-        a = line_amounts(
-            i.quantity,
-            i.unit_price,
-            rate.rate_percent if rate else 0,  # type: ignore[arg-type]
-            prices_include_tax=v.prices_include_tax,
-            negative=i.kind == "discount",
-        )
-        amounts.append(a)
-        db.add(
-            QuotationItem(
-                version_id=v.id,
-                position=pos,
-                kind=i.kind,
-                description=i.description,
-                part_number=i.part_number,
-                quantity=i.quantity,
-                unit_price=i.unit_price,
-                tax_rate_id=rate.id if rate else None,
-                tax_rate_name=rate.name if rate else None,
-                tax_rate_percent=rate.rate_percent if rate else 0,
-                line_subtotal=a.subtotal,
-                line_tax=a.tax,
-                line_total=a.total,
-            )
-        )
-    totals = sum_amounts(amounts)
+    db.add_all(QuotationItem(version_id=v.id, **p.fields) for p in priced)
     v.subtotal, v.tax_total, v.total = totals.subtotal, totals.tax, totals.total
     v.valid_until, v.terms, v.notes = body.valid_until, body.terms, body.notes
     db.commit()
@@ -596,23 +557,7 @@ def revise(
         db.add(
             QuotationItem(
                 version_id=new.id,
-                **{
-                    c: getattr(item, c)
-                    for c in (
-                        "position",
-                        "kind",
-                        "description",
-                        "part_number",
-                        "quantity",
-                        "unit_price",
-                        "tax_rate_id",
-                        "tax_rate_name",
-                        "tax_rate_percent",
-                        "line_subtotal",
-                        "line_tax",
-                        "line_total",
-                    )
-                },
+                **{c: getattr(item, c) for c in ITEM_COLUMNS},
             )
         )
     new.subtotal, new.tax_total, new.total = old.subtotal, old.tax_total, old.total

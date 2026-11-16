@@ -58,6 +58,8 @@ class OrganisationSettings(TimestampMixin, Base):
     document_footer: Mapped[str | None] = mapped_column(Text)
     quotation_validity_days: Mapped[int] = mapped_column(Integer, server_default="14")
     quotation_terms: Mapped[str | None] = mapped_column(Text)
+    invoice_payment_days: Mapped[int] = mapped_column(Integer, server_default="0")
+    invoice_terms: Mapped[str | None] = mapped_column(Text)
 
 
 class TaxRate(UUIDPrimaryKeyMixin, TimestampMixin, Base):
