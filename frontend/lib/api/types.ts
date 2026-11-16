@@ -700,3 +700,57 @@ export interface CustomerBalance {
   unallocated_credit: string;
   open_invoices: InvoiceListItem[];
 }
+
+// --------------------------------------------------------------------------- reports
+
+export interface ReportPeriod {
+  date_from: string;
+  date_to: string;
+  timezone: string;
+}
+
+export interface CountAmount {
+  count: number;
+  total: string;
+}
+
+export interface FinancialReport {
+  period: ReportPeriod;
+  branch: Ref | null;
+  currency_code: string;
+  invoiced: { count: number; subtotal: string; tax_total: string; total: string };
+  credited: CountAmount;
+  net_invoiced: string;
+  received: CountAmount;
+  refunded: CountAmount;
+  reversed: CountAmount;
+  net_received: string;
+  by_method: { method: PaymentMethod; received: string; paid_out: string }[];
+  daily: { date: string; invoiced: string; received: string }[];
+  receivables: {
+    as_at: string;
+    outstanding: string;
+    overdue: string;
+    open_invoices: number;
+    ageing: { bucket: string; count: number; amount: string }[];
+    unapplied_credit: string;
+  };
+  definitions: { term: string; definition: string }[];
+}
+
+export interface OperationsReport {
+  period: ReportPeriod;
+  branch: Ref | null;
+  currency_code: string;
+  received: number;
+  completed: number;
+  cancelled: number;
+  turnaround_hours_avg: number | null;
+  turnaround_hours_median: number | null;
+  open_by_status: Partial<Record<JobStatus, number>>;
+  open_total: number;
+  overdue_now: number;
+  quotations: { sent: number; approved: number; rejected: number; approved_value: string };
+  mechanics: { user_id: UUID; name: string; open_jobs: number; completed_in_period: number }[];
+  definitions: { term: string; definition: string }[];
+}

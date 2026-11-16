@@ -1,7 +1,7 @@
 import type { Me } from "./api/types";
 import { P, can, canInAnyBranch } from "./permissions";
 
-export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments";
+export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments" | "reports";
 
 export interface NavItem {
   href: string;
@@ -59,6 +59,9 @@ export function navigationFor(me: Me): NavGroup[] {
     finance.push({ href: "/payments", label: "Payments", icon: "payments" });
   }
   if (finance.length) groups.push({ label: "Finance", items: finance });
+  if (canInAnyBranch(me, P.REPORTS_FINANCIAL) || canInAnyBranch(me, P.REPORTS_OPERATIONAL)) {
+    groups.push({ label: "Analytics", items: [{ href: "/reports", label: "Reports", icon: "reports" }] });
+  }
   if (admin.length) groups.push({ label: "Administration", items: admin });
   return groups;
 }

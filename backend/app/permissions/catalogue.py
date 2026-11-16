@@ -59,6 +59,8 @@ class P(StrEnum):
     INVOICES_CREDIT = "invoices.credit"
     PAYMENTS_RECORD = "payments.record"
     PAYMENTS_REFUND = "payments.refund"
+    REPORTS_OPERATIONAL = "reports.operational"
+    REPORTS_FINANCIAL = "reports.financial"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -287,6 +289,20 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "Reverse a mistakenly recorded payment or refund an overpayment, with a reason.",
         Scope.BRANCH,
     ),
+    PermissionDef(
+        P.REPORTS_OPERATIONAL,
+        "Reports",
+        "View operational reports",
+        "Jobs received and completed, turnaround, quotation outcomes and mechanic workload.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.REPORTS_FINANCIAL,
+        "Reports",
+        "View financial reports",
+        "Invoiced revenue, credits, payments received, refunds and receivables.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -346,6 +362,8 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INVOICES_CREDIT,
                 P.PAYMENTS_RECORD,
                 P.PAYMENTS_REFUND,
+                P.REPORTS_OPERATIONAL,
+                P.REPORTS_FINANCIAL,
             }
         ),
     ),
@@ -412,6 +430,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INVOICES_CREDIT,
                 P.PAYMENTS_RECORD,
                 P.PAYMENTS_REFUND,
+                P.REPORTS_FINANCIAL,
             }
         ),
     ),

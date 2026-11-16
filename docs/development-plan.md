@@ -70,28 +70,30 @@ Deferred:
 **Exit:** met. Staff can register a customer and vehicle, receive the vehicle, inspect it, open a job card and assign a mechanic (`frontend/tests/e2e/workshop-flow.spec.ts`).
 
 Deferred:
-- Inspection PDF generation (Phase 3 brings server-side PDFs; a printable report exists now).
+- Inspection PDF generation (done in Phase 3c).
 - Vehicle photos outside inspections; job card attachments.
 - Mechanic leave/availability and a week view (manual day scheduling only, per CLAUDE.md §3.12).
 - Upcoming appointments on the customer page (API exists: `GET /appointments/upcoming`).
 
 ---
 
-## Phase 3 — Commercial workflow — `in progress`
+## Phase 3 — Commercial workflow — `done`
 
 | # | Deliverable | Status |
 |---|---|---|
 | 3a | Quotations: versions, server-calculated lines and configurable tax, send with single-use customer link, online or staff-recorded decision bound to exact version and total, revisions supersede approvals, approval unlocks repair | done |
 | 3b | Invoices: drafts prefilled from the approved quotation, issue after quality inspection, number and due date from payment terms, immutable once issued (database trigger). Credit notes (full or amount, never more than remains). Payments with mandatory Idempotency-Key, locked allocations, customer credit, reversals and overpayment refunds, append-only. Customer balance. | done |
 | 3c | Server-side PDFs (ReportLab, generated on request; ADR 0005): quotation (staff and customer link), invoice, credit note, receipt, inspection report with photo thumbnails | done |
-| 3d | Basic reports: jobs by status, invoiced revenue vs payments received vs receivables, explicit date ranges and metric definitions | next |
+| 3d | Reports with explicit inclusive periods in the organisation time zone, branch-scoped: financial (invoiced, credited, received, refunded, reversed, by method and day; receivables and ageing as at today; unapplied credit) and operations (received, completed, cancelled, turnaround, open now, quotation outcomes, mechanic workload). Metric definitions returned with each report and shown on screen. New permissions `reports.financial` and `reports.operational` (migration 0009). | done |
+
+**Exit:** met. A job is quoted, approved, completed, invoiced and paid partially or fully, with correct balances, receipts, PDFs and audit history (`backend/tests/test_invoices.py`, `frontend/tests/e2e/invoice.spec.ts`).
 
 Rules worth knowing:
 - Invoices can be issued once the job reaches quality inspection (`INVOICEABLE` in `app/services/invoices.py`). Deposits taken earlier are recorded as unallocated payments and applied later.
 - Balance due = total − credited − paid. A negative balance is an overpayment and can only be paid back as a refund against that invoice.
 - A partial credit note is recorded without tax; to reverse taxed lines, credit the whole invoice and issue a corrected one. Refunding unapplied credit that is not on an invoice is not supported yet (reverse the payment instead if it was recorded in error).
 
-## Phase 4 — Inventory and procurement — `planned`
+## Phase 4 — Inventory and procurement — `next`
 
 Parts catalogue, stock locations, stock movement ledger as source of truth, concurrency-safe reservations/issues/returns/transfers, suppliers, purchase orders, partial goods received notes, low-stock and valuation reports.
 

@@ -33,6 +33,8 @@ export const P = {
   INVOICES_CREDIT: "invoices.credit",
   PAYMENTS_RECORD: "payments.record",
   PAYMENTS_REFUND: "payments.refund",
+  REPORTS_OPERATIONAL: "reports.operational",
+  REPORTS_FINANCIAL: "reports.financial",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];

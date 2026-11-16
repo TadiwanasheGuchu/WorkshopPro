@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building2, CalendarDays, Car, ClipboardList, Contact, FileText, LayoutDashboard, Receipt, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
+import { Banknote, BarChart3, Building2, CalendarDays, Car, ClipboardList, Contact, FileText, LayoutDashboard, Receipt, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,6 +20,7 @@ const icons: Record<NavIcon, LucideIcon> = {
   quotations: FileText,
   invoices: Receipt,
   payments: Banknote,
+  reports: BarChart3,
 };
 
 function isActive(pathname: string, href: string, match: string[] = []): boolean {
