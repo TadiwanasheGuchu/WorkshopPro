@@ -1,6 +1,6 @@
 import type { DateFormat } from "./api/types";
 
-interface Prefs {
+export interface Prefs {
   timezone: string;
   date_format: DateFormat;
 }

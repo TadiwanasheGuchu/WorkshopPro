@@ -28,6 +28,11 @@ export const P = {
   QUOTATIONS_VIEW: "quotations.view",
   QUOTATIONS_MANAGE: "quotations.manage",
   QUOTATIONS_RECORD_DECISION: "quotations.record_decision",
+  INVOICES_VIEW: "invoices.view",
+  INVOICES_MANAGE: "invoices.manage",
+  INVOICES_CREDIT: "invoices.credit",
+  PAYMENTS_RECORD: "payments.record",
+  PAYMENTS_REFUND: "payments.refund",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];

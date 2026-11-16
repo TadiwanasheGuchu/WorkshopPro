@@ -1,9 +1,19 @@
-import type { QuoteVersion } from "@/lib/api/types";
+import type { QuoteItem } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
 import { LINE_KIND } from "@/lib/quotation";
 
-/** Read-only lines and totals. Amounts come from the server; nothing is calculated here. */
-export function QuoteLines({ version }: { version: QuoteVersion }) {
+interface LinesDocument {
+  items: QuoteItem[];
+  currency_code: string;
+  prices_include_tax: boolean;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+}
+
+/** Read-only lines and totals of a quotation or invoice. Amounts come from the server;
+ * nothing is calculated here. */
+export function DocumentLines({ document: version }: { document: LinesDocument }) {
   const c = version.currency_code;
   return (
     <div>

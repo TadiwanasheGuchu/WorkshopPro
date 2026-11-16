@@ -77,9 +77,19 @@ Deferred:
 
 ---
 
-## Phase 3 — Commercial workflow — `next`
+## Phase 3 — Commercial workflow — `in progress`
 
-Quotations with versioning, approvals bound to exact version and total, documented approval exceptions, Celery + PDF generation, invoices (immutable once issued), credit notes, payments with idempotency keys and allocations, receipts, basic operational and financial reports.
+| # | Deliverable | Status |
+|---|---|---|
+| 3a | Quotations: versions, server-calculated lines and configurable tax, send with single-use customer link, online or staff-recorded decision bound to exact version and total, revisions supersede approvals, approval unlocks repair | done |
+| 3b | Invoices: drafts prefilled from the approved quotation, issue after quality inspection, number and due date from payment terms, immutable once issued (database trigger). Credit notes (full or amount, never more than remains). Payments with mandatory Idempotency-Key, locked allocations, customer credit, reversals and overpayment refunds, append-only. Customer balance. | done |
+| 3c | Server-side PDFs: quotation, invoice, receipt, inspection report | next |
+| 3d | Basic reports: jobs by status, invoiced revenue vs payments received vs receivables, explicit date ranges and metric definitions | planned |
+
+Rules worth knowing:
+- Invoices can be issued once the job reaches quality inspection (`INVOICEABLE` in `app/services/invoices.py`). Deposits taken earlier are recorded as unallocated payments and applied later.
+- Balance due = total − credited − paid. A negative balance is an overpayment and can only be paid back as a refund against that invoice.
+- A partial credit note is recorded without tax; to reverse taxed lines, credit the whole invoice and issue a corrected one. Refunding unapplied credit that is not on an invoice is not supported yet (reverse the payment instead if it was recorded in error).
 
 ## Phase 4 — Inventory and procurement — `planned`
 

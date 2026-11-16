@@ -105,6 +105,11 @@ const prefsSchema = z.object({
     .regex(/^\d{1,3}$/, "Whole days only.")
     .refine((v) => Number(v) >= 1 && Number(v) <= 365, "Between 1 and 365 days."),
   quotation_terms: z.string().max(4000),
+  invoice_payment_days: z
+    .string()
+    .regex(/^\d{1,3}$/, "Whole days only.")
+    .refine((v) => Number(v) <= 365, "Between 0 and 365 days."),
+  invoice_terms: z.string().max(4000),
 });
 type PrefsValues = z.infer<typeof prefsSchema>;
 
@@ -118,6 +123,8 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
       document_footer: settings.document_footer ?? "",
       quotation_validity_days: String(settings.quotation_validity_days),
       quotation_terms: settings.quotation_terms ?? "",
+      invoice_payment_days: String(settings.invoice_payment_days),
+      invoice_terms: settings.invoice_terms ?? "",
     },
   });
   const { errors, isSubmitting, isDirty } = form.formState;
@@ -131,6 +138,8 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
         document_footer: values.document_footer.trim() || null,
         quotation_validity_days: Number(values.quotation_validity_days),
         quotation_terms: values.quotation_terms.trim() || null,
+        invoice_payment_days: Number(values.invoice_payment_days),
+        invoice_terms: values.invoice_terms.trim() || null,
       });
       form.reset(values);
       setMessage({ tone: "success", text: "Preferences saved." });
@@ -183,6 +192,14 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
       </div>
       <Field label="Default quotation terms" hint="Copied onto new quotations; editable per quotation." error={errors.quotation_terms?.message}>
         {(p) => <Textarea {...p} rows={3} disabled={readOnly} {...form.register("quotation_terms")} />}
+      </Field>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Invoices due after (days)" hint="0 means due on the day of issue." error={errors.invoice_payment_days?.message}>
+          {(p) => <Input {...p} type="number" min={0} max={365} disabled={readOnly} {...form.register("invoice_payment_days")} />}
+        </Field>
+      </div>
+      <Field label="Default invoice terms" hint="Copied onto new invoices; editable per draft." error={errors.invoice_terms?.message}>
+        {(p) => <Textarea {...p} rows={3} disabled={readOnly} {...form.register("invoice_terms")} />}
       </Field>
       {readOnly ? null : (
         <Button type="submit" variant="primary" loading={isSubmitting} disabled={!isDirty}>

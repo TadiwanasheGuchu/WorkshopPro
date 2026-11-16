@@ -22,11 +22,13 @@ type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 /**
  * Call the API from the browser. Requests go to the same origin (/api/v1/...), which
  * the Next.js proxy forwards to the backend. Unsafe methods carry the CSRF header.
+ * Payments pass an idempotency key so a retried or double-submitted request is recorded once.
  */
-export async function api<T = void>(method: Method, path: string, body?: unknown): Promise<T> {
+export async function api<T = void>(method: Method, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
   const headers: Record<string, string> = { accept: "application/json" };
   if (body !== undefined) headers["content-type"] = "application/json";
   if (method !== "GET") headers["x-csrf-token"] = await csrfToken();
+  if (options?.idempotencyKey) headers["idempotency-key"] = options.idempotencyKey;
 
   const res = await fetch(`/api/v1${path}`, {
     method,

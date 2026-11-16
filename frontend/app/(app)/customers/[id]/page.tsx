@@ -8,9 +8,9 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { DetailList, EmptyState, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { AuditLogEntry, CustomerDetail, JobCardSummary, Page } from "@/lib/api/types";
+import type { AuditLogEntry, CustomerBalance, CustomerDetail, JobCardSummary, Page } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import { CONSENT_CHANNEL, CONSENT_METHOD, CONTACT_METHOD, formatPhone, vehicleTitle } from "@/lib/labels";
 import { P, can, canInAnyBranch } from "@/lib/permissions";
 
@@ -39,6 +39,7 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
       : Promise.resolve(null),
   ]);
   const jobs = canInAnyBranch(me, P.JOB_CARDS_VIEW) ? await apiGet<Page<JobCardSummary>>(`/job-cards?customer_id=${id}&page_size=20`) : null;
+  const balance = canInAnyBranch(me, P.INVOICES_VIEW) ? await apiGet<CustomerBalance>(`/customers/${id}/balance`) : null;
   const manage = canInAnyBranch(me, P.CUSTOMERS_MANAGE);
   const manageVehicles = canInAnyBranch(me, P.VEHICLES_MANAGE);
   const prefs = me.organisation;
@@ -66,6 +67,36 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
 
       <div className="grid gap-5 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-5">
+          {balance ? (
+            <Panel title="Account" flush>
+              <dl className="space-y-1.5 px-4 py-3 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted">Outstanding</dt>
+                  <dd className="font-mono tabular-nums">{formatMoney(balance.outstanding, balance.currency_code)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted">Unapplied credit</dt>
+                  <dd className="font-mono tabular-nums">{formatMoney(balance.unallocated_credit, balance.currency_code)}</dd>
+                </div>
+              </dl>
+              {balance.open_invoices.length ? (
+                <ul className="divide-y divide-border border-t border-border">
+                  {balance.open_invoices.map((i) => (
+                    <li key={i.id}>
+                      <Link href={`/invoices/${i.id}`} className="flex justify-between gap-2 px-4 py-2 text-sm hover:bg-mist">
+                        <span className="font-mono text-steel">{i.invoice_number}</span>
+                        <span className={i.is_overdue ? "font-mono text-status-danger tabular-nums" : "font-mono tabular-nums"}>
+                          {formatMoney(i.balance_due, i.currency_code)}
+                          {i.is_overdue ? " overdue" : ""}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="border-t border-border px-4 py-2 text-xs text-muted">Outstanding is the unpaid balance of issued invoices. Unapplied credit is money received but not yet applied to an invoice.</p>
+            </Panel>
+          ) : null}
           <Panel title="Contact">
             <DetailList
               items={[

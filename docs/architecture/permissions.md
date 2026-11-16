@@ -50,6 +50,11 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `quotations.view` | branch | View quotations, versions and decisions |
 | `quotations.manage` | branch | Prepare, send, revise quotations; read tax rates |
 | `quotations.record_decision` | branch | Record a customer's approval/rejection given offline, with evidence |
+| `invoices.view` | branch | View invoices, credit notes, payments and customer balances |
+| `invoices.manage` | branch | Start, edit, delete and issue draft invoices |
+| `invoices.credit` | branch | Issue credit notes against issued invoices |
+| `payments.record` | branch | Record payments received and apply customer credit |
+| `payments.refund` | branch | Refund overpayments and reverse payments recorded in error |
 
 Viewing an inspection or its photos follows job card visibility: anyone who can see the job can see them.
 
@@ -66,10 +71,10 @@ The transition table lives in `backend/app/services/job_workflow.py`. Assigned m
 | Owner | everything, always | everything automatically |
 | Administrator | all Phase 1 permissions | via data migration |
 | Workshop manager | `branches.view`, `users.view`, customers and vehicles (view + manage) | job cards, inspections, scheduling, reports |
-| Service advisor | `branches.view`, customers and vehicles (view + manage) | bookings, quotations |
+| Service advisor | `branches.view`, customers and vehicles (view + manage) | bookings, quotations, invoices (view, manage), payments (record) |
 | Mechanic | `branches.view`, `customers.view`, `vehicles.view` | assigned jobs, inspections |
 | Inventory manager | `branches.view` | parts, stock, suppliers, purchasing |
-| Accounts / cashier | `branches.view`, `customers.view`, `vehicles.view` | invoices, payments |
+| Accounts / cashier | `branches.view`, `customers.view`, `vehicles.view` | invoices, credit notes, payments, refunds |
 
 ## Adding a permission
 

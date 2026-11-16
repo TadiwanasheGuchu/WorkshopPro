@@ -1,7 +1,7 @@
 import type { Me } from "./api/types";
 import { P, can, canInAnyBranch } from "./permissions";
 
-export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations";
+export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments";
 
 export interface NavItem {
   href: string;
@@ -52,9 +52,13 @@ export function navigationFor(me: Me): NavGroup[] {
   }
   if (workshop.length) groups.push({ label: "Workshop", items: workshop });
   if (customers.length) groups.push({ label: "Customers", items: customers });
-  if (canInAnyBranch(me, P.QUOTATIONS_VIEW)) {
-    groups.push({ label: "Finance", items: [{ href: "/quotations", label: "Quotations", icon: "quotations" }] });
+  const finance: NavItem[] = [];
+  if (canInAnyBranch(me, P.QUOTATIONS_VIEW)) finance.push({ href: "/quotations", label: "Quotations", icon: "quotations" });
+  if (canInAnyBranch(me, P.INVOICES_VIEW)) {
+    finance.push({ href: "/invoices", label: "Invoices", icon: "invoices" });
+    finance.push({ href: "/payments", label: "Payments", icon: "payments" });
   }
+  if (finance.length) groups.push({ label: "Finance", items: finance });
   if (admin.length) groups.push({ label: "Administration", items: admin });
   return groups;
 }

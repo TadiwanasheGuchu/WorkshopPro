@@ -68,6 +68,8 @@ export interface OrganisationSettings {
   document_footer: string | null;
   quotation_validity_days: number;
   quotation_terms: string | null;
+  invoice_payment_days: number;
+  invoice_terms: string | null;
 }
 
 export interface TaxRate {
@@ -611,4 +613,90 @@ export interface PublicQuotation {
   can_decide: boolean;
   decision: "approved" | "rejected" | null;
   decided_at: string | null;
+}
+
+// --------------------------------------------------------------------------- invoices
+
+export type PaymentMethod = "cash" | "eft" | "card" | "mobile" | "cheque" | "other";
+export type InvoicePaymentStatus = "draft" | "unpaid" | "partially_paid" | "paid" | "credited" | "overpaid";
+export type PaymentKind = "payment" | "refund" | "reversal";
+
+export interface InvoiceListItem {
+  id: UUID;
+  invoice_number: string | null;
+  status: "draft" | "issued";
+  payment_status: InvoicePaymentStatus;
+  customer: Ref;
+  job_card: Ref | null;
+  issue_date: string | null;
+  due_date: string | null;
+  is_overdue: boolean;
+  currency_code: string;
+  total: string;
+  balance_due: string;
+}
+
+export interface CreditNote {
+  id: UUID;
+  credit_note_number: string;
+  issue_date: string;
+  reason: string;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  created_by: string;
+}
+
+export interface InvoicePaymentLine {
+  payment_id: UUID;
+  receipt_number: string;
+  kind: PaymentKind;
+  method: PaymentMethod;
+  received_at: string;
+  amount: string;
+}
+
+export interface Invoice extends InvoiceListItem {
+  branch: Ref;
+  prices_include_tax: boolean;
+  items: QuoteItem[];
+  subtotal: string;
+  tax_total: string;
+  amount_paid: string;
+  amount_credited: string;
+  notes: string | null;
+  terms: string | null;
+  issued_at: string | null;
+  issued_by: string | null;
+  quotation_version_id: UUID | null;
+  credit_notes: CreditNote[];
+  payments: InvoicePaymentLine[];
+  capabilities: { edit: boolean; issue: boolean; delete: boolean; credit: boolean; record_payment: boolean; refund: boolean };
+}
+
+export interface Payment {
+  id: UUID;
+  receipt_number: string;
+  kind: PaymentKind;
+  method: PaymentMethod;
+  amount: string;
+  currency_code: string;
+  received_at: string;
+  reference: string | null;
+  notes: string | null;
+  branch: Ref;
+  customer: Ref;
+  recorded_by: string;
+  allocations: { invoice_id: UUID; invoice_number: string | null; amount: string }[];
+  unallocated: string;
+  reversed_by_receipt: string | null;
+  reverses_receipt: string | null;
+}
+
+export interface CustomerBalance {
+  customer_id: UUID;
+  currency_code: string;
+  outstanding: string;
+  unallocated_credit: string;
+  open_invoices: InvoiceListItem[];
 }

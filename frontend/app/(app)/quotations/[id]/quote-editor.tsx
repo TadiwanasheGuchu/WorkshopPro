@@ -1,47 +1,25 @@
 "use client";
 
-import { Copy, Plus, X } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { type Line, LineItemsEditor, linesInvalid, linesPayload, toLine } from "@/components/app/line-items-editor";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { api } from "@/lib/api/client";
 import { errorMessage } from "@/lib/api/errors";
-import type { LineKind, Quotation, QuoteItem, TaxRate } from "@/lib/api/types";
+import type { Quotation, TaxRate } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
-import { DECISION_METHOD, LINE_KIND } from "@/lib/quotation";
+import { DECISION_METHOD } from "@/lib/quotation";
 
-interface Line {
-  key: number;
-  kind: LineKind;
-  description: string;
-  part_number: string;
-  quantity: string;
-  unit_price: string;
-  tax_rate_id: string;
-}
-
-let nextKey = 1;
-const toLine = (i: QuoteItem): Line => ({
-  key: nextKey++,
-  kind: i.kind,
-  description: i.description,
-  part_number: i.part_number ?? "",
-  quantity: i.quantity,
-  unit_price: i.unit_price,
-  tax_rate_id: i.tax_rate_id ?? "",
-});
-
-const MONEY_RE = /^\d{1,12}(\.\d{1,2})?$/;
 
 export function DraftEditor({ quote, taxRates }: { quote: Quotation; taxRates: TaxRate[] }) {
   const router = useRouter();
   const v = quote.current;
   const activeRates = taxRates.filter((r) => r.is_active);
-  const defaultRate = activeRates.find((r) => r.is_default)?.id ?? "";
   const [lines, setLines] = useState<Line[]>(v.items.map(toLine));
   const [validUntil, setValidUntil] = useState(v.valid_until ?? "");
   const [terms, setTerms] = useState(v.terms ?? "");
@@ -50,22 +28,7 @@ export function DraftEditor({ quote, taxRates }: { quote: Quotation; taxRates: T
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
-  const invalid = lines.some(
-    (l) => !l.description.trim() || !MONEY_RE.test(l.quantity) || Number(l.quantity) <= 0 || !MONEY_RE.test(l.unit_price),
-  );
-
-  function update(key: number, patch: Partial<Line>) {
-    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
-    setDirty(true);
-  }
-
-  function add(kind: LineKind) {
-    setLines((prev) => [
-      ...prev,
-      { key: nextKey++, kind, description: "", part_number: "", quantity: kind === "labour" ? "1.0" : "1", unit_price: "", tax_rate_id: defaultRate },
-    ]);
-    setDirty(true);
-  }
+  const invalid = linesInvalid(lines);
 
   async function save(): Promise<boolean> {
     setBusy(true);
@@ -75,14 +38,7 @@ export function DraftEditor({ quote, taxRates }: { quote: Quotation; taxRates: T
         valid_until: validUntil || null,
         terms: terms.trim() || null,
         notes: notes.trim() || null,
-        items: lines.map((l) => ({
-          kind: l.kind,
-          description: l.description.trim(),
-          part_number: l.part_number.trim() || null,
-          quantity: l.quantity,
-          unit_price: l.unit_price,
-          tax_rate_id: l.tax_rate_id || null,
-        })),
+        items: linesPayload(lines),
       });
       setDirty(false);
       router.refresh();
@@ -104,60 +60,7 @@ export function DraftEditor({ quote, taxRates }: { quote: Quotation; taxRates: T
         </Alert>
       ) : null}
 
-      <div className="space-y-3">
-        {lines.length === 0 ? <p className="text-sm text-muted">No lines yet. Add labour, parts or fees below.</p> : null}
-        {lines.map((l, index) => (
-          <div key={l.key} className="grid gap-2 rounded-control border border-border p-3 md:grid-cols-[7rem_1fr_6rem_7rem_9rem_auto] md:items-start md:border-0 md:p-0">
-            <Select aria-label={`Line ${index + 1} type`} value={l.kind} onChange={(e) => update(l.key, { kind: e.target.value as LineKind })}>
-              {Object.entries(LINE_KIND).map(([k, label]) => (
-                <option key={k} value={k}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-            <div className="space-y-1">
-              <Input aria-label={`Line ${index + 1} description`} placeholder="Description" value={l.description} maxLength={500} onChange={(e) => update(l.key, { description: e.target.value })} />
-              {l.kind === "part" ? (
-                <Input aria-label={`Line ${index + 1} part number`} placeholder="Part number" className="font-mono" value={l.part_number} onChange={(e) => update(l.key, { part_number: e.target.value })} />
-              ) : null}
-            </div>
-            <Input
-              aria-label={`Line ${index + 1} ${l.kind === "labour" ? "hours" : "quantity"}`}
-              inputMode="decimal"
-              className="text-right font-mono"
-              placeholder={l.kind === "labour" ? "Hours" : "Qty"}
-              value={l.quantity}
-              onChange={(e) => update(l.key, { quantity: e.target.value })}
-            />
-            <Input
-              aria-label={`Line ${index + 1} ${l.kind === "labour" ? "rate per hour" : "unit price"}`}
-              inputMode="decimal"
-              className="text-right font-mono"
-              placeholder={l.kind === "labour" ? "Rate / h" : "Price"}
-              value={l.unit_price}
-              onChange={(e) => update(l.key, { unit_price: e.target.value })}
-            />
-            <Select aria-label={`Line ${index + 1} tax`} value={l.tax_rate_id} onChange={(e) => update(l.key, { tax_rate_id: e.target.value })}>
-              <option value="">No tax</option>
-              {activeRates.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ({r.rate_percent}%)
-                </option>
-              ))}
-            </Select>
-            <Button variant="ghost" aria-label={`Remove line ${index + 1}`} onClick={() => (setLines((p) => p.filter((x) => x.key !== l.key)), setDirty(true))}>
-              <X className="size-4" aria-hidden />
-            </Button>
-          </div>
-        ))}
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(LINE_KIND) as LineKind[]).map((k) => (
-            <Button key={k} size="sm" onClick={() => add(k)}>
-              <Plus className="size-4" aria-hidden /> {LINE_KIND[k]}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <LineItemsEditor lines={lines} onChange={(next) => (setLines(next), setDirty(true))} taxRates={activeRates} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Valid until" hint="Defaults to your quotation validity setting when sent.">

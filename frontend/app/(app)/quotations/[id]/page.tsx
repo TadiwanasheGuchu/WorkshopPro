@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { DocumentLines } from "@/components/app/document-lines";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
@@ -14,7 +15,6 @@ import { P, canInAnyBranch } from "@/lib/permissions";
 import { DECISION_METHOD, QUOTE_STATUS } from "@/lib/quotation";
 
 import { DraftEditor, SentActions } from "./quote-editor";
-import { QuoteLines } from "./quote-lines";
 
 export const metadata: Metadata = { title: "Quotation" };
 
@@ -71,14 +71,14 @@ async function Content({ params }: { params: PageProps<"/quotations/[id]">["para
               <>
                 {v.items.length ? (
                   <div className="mb-5 border-b border-border pb-5">
-                    <QuoteLines version={v} />
+                    <DocumentLines document={v} />
                   </div>
                 ) : null}
                 <DraftEditor key={v.id + v.total + v.items.length} quote={q} taxRates={taxRates} />
               </>
             ) : (
               <>
-                <QuoteLines version={v} />
+                <DocumentLines document={v} />
                 {v.notes ? <p className="mt-4 text-sm whitespace-pre-line">{v.notes}</p> : null}
                 {v.terms ? (
                   <div className="mt-4 border-t border-border pt-3 text-xs whitespace-pre-line text-muted">{v.terms}</div>
