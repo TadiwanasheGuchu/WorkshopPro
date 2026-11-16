@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { DetailList, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { InvoiceListItem, JobCardDetail, Quotation } from "@/lib/api/types";
+import type { InvoiceListItem, JobCardDetail, JobParts, Quotation } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { EXCEPTION_TYPE_LABEL, FUEL_LEVEL_LABEL, JOB_STATUS_LABEL, PRIORITY_LABEL } from "@/lib/job-status";
@@ -25,6 +25,7 @@ import {
 } from "./job-actions";
 import { InspectionList, StartInspectionButton } from "./inspections-panel";
 import { InvoicesPanel } from "./invoices-panel";
+import { PartsPanel } from "./parts-panel";
 import { PrepareQuotationButton, QuotationSummary } from "./quotation-panel";
 
 export const metadata: Metadata = { title: "Job card" };
@@ -50,6 +51,7 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
   const quote = canViewQuotes ? await apiGet<Quotation | null>(`/job-cards/${job.id}/quotation`) : null;
   const canViewInvoices = can(me, P.INVOICES_VIEW, job.branch.id);
   const invoices = canViewInvoices ? await apiGet<InvoiceListItem[]>(`/job-cards/${job.id}/invoices`) : [];
+  const parts = can(me, P.INVENTORY_VIEW, job.branch.id) ? await apiGet<JobParts>(`/job-cards/${job.id}/parts`) : null;
 
   return (
     <>
@@ -133,6 +135,8 @@ async function Content({ params }: { params: PageProps<"/job-cards/[id]">["param
               {quote ? <QuotationSummary quote={quote} /> : <p className="px-4 py-3 text-sm text-muted">No quotation yet.</p>}
             </Panel>
           ) : null}
+
+          {parts ? <PartsPanel jobId={job.id} parts={parts} /> : null}
 
           {canViewInvoices ? <InvoicesPanel job={job} invoices={invoices} canManage={can(me, P.INVOICES_MANAGE, job.branch.id)} prefs={prefs} /> : null}
 

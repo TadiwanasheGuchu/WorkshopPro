@@ -845,3 +845,30 @@ export interface StockOperation {
   movements: StockMovement[];
   unchanged_part_ids: UUID[];
 }
+
+export interface JobPartReservation {
+  id: UUID;
+  part: Ref;
+  sku: string;
+  unit: PartUnit;
+  location: Ref;
+  quantity: string;
+  issued_quantity: string;
+  released_quantity: string;
+  outstanding: string;
+  status: "open" | "closed";
+  release_reason: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface JobParts {
+  job_card_id: UUID;
+  authorised: boolean;
+  currency_code: string;
+  capabilities: { reserve: boolean; issue: boolean; return_parts: boolean; release: boolean };
+  locations: Ref[];
+  reservations: JobPartReservation[];
+  used: { part: Ref; sku: string; unit: PartUnit; issued: string; selling_price: string; value: string }[];
+  movements: StockMovement[];
+}

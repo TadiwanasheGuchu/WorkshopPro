@@ -61,7 +61,7 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `inventory.catalogue` | organisation | Add and edit parts, categories and prices; see cost prices |
 | `inventory.adjust` | branch | Opening stock, stocktake adjustments, minimum levels, stock locations; see cost prices |
 | `inventory.transfer` | branch | Transfer stock; needed in both the sending and receiving branch |
-| `inventory.issue` | branch | Reserve, issue and return parts for jobs (Phase 4b) |
+| `inventory.issue` | branch | Reserve, issue and return parts for authorised jobs; release reservations |
 
 Viewing an inspection or its photos follows job card visibility: anyone who can see the job can see them.
 

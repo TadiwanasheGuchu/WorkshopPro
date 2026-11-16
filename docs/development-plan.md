@@ -98,8 +98,8 @@ Rules worth knowing:
 | # | Deliverable | Status |
 |---|---|---|
 | 4a | Parts catalogue (categories, units, cost and selling price, tax), stock locations per branch (default store created with every branch), append-only stock movement ledger maintained by database trigger, opening stock and stocktake adjustments with mandatory reason, transfers of available stock, minimum levels and low-stock filter, movement ledger screen. Every stock-changing request needs an Idempotency-Key. | done |
-| 4b | Reserve stock for authorised jobs, issue parts that are fitted, returns from jobs; parts used shown on the job card | next |
-| 4c | Suppliers, supplier part references, purchase orders with approval, goods received notes with partial deliveries, supplier returns | planned |
+| 4b | Reserve stock for authorised jobs (approved quotation or approval exception), issue parts when fitted (drawing on the job's reservations first), returns limited to what was issued, manual release, automatic release when a job is completed or cancelled; Parts panel on the job card | done |
+| 4c | Suppliers, supplier part references, purchase orders with approval, goods received notes with partial deliveries, supplier returns | next |
 | 4d | Stock valuation, ledger reconciliation and purchasing reports | planned |
 
 Rules worth knowing:
@@ -108,6 +108,8 @@ Rules worth knowing:
 - Operations lock the affected stock-level rows in a fixed order, so concurrent requests cannot oversell (`test_concurrent_removals_cannot_oversell`).
 - The parts catalogue is organisation-wide: managing it (`inventory.catalogue`) needs an organisation-wide role. Stock is per branch.
 - Cost prices are shown only to users who manage the catalogue or adjust stock.
+- `stock_levels.reserved` equals the outstanding total of open `stock_reservations` for the part and location; the tests assert this. Parts must come from a location in the job's branch.
+- Issued parts are not added to invoices automatically yet: the invoice is prefilled from the approved quotation, and the Parts panel shows what was fitted so staff can reconcile before issuing.
 
 ## Phase 5 — Customer experience and communications — `planned`
 

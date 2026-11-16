@@ -214,3 +214,53 @@ class StockMovement(UUIDPrimaryKeyMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )
+
+
+class StockReservation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Stock held for an authorised job at a location. Outstanding = quantity - issued -
+    released. stock_levels.reserved equals the outstanding total of open reservations for
+    the same part and location (maintained under the stock-level row lock)."""
+
+    __tablename__ = "stock_reservations"
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="quantity_positive"),
+        CheckConstraint("issued_quantity >= 0", name="issued_non_negative"),
+        CheckConstraint("released_quantity >= 0", name="released_non_negative"),
+        CheckConstraint("issued_quantity + released_quantity <= quantity", name="within_quantity"),
+        CheckConstraint("status IN ('open', 'closed')", name="status_valid"),
+        Index("ix_stock_reservations_job", "job_card_id"),
+        Index(
+            "ix_stock_reservations_open",
+            "location_id",
+            "part_id",
+            postgresql_where=text("status = 'open'"),
+        ),
+    )
+
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organisations.id", ondelete="RESTRICT")
+    )
+    branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("branches.id", ondelete="RESTRICT")
+    )
+    job_card_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("job_cards.id", ondelete="RESTRICT")
+    )
+    location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("stock_locations.id", ondelete="RESTRICT")
+    )
+    part_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("parts.id", ondelete="RESTRICT")
+    )
+    operation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("stock_operations.id", ondelete="RESTRICT")
+    )
+    quantity: Mapped[Decimal] = mapped_column(QTY)
+    issued_quantity: Mapped[Decimal] = mapped_column(QTY, server_default="0")
+    released_quantity: Mapped[Decimal] = mapped_column(QTY, server_default="0")
+    status: Mapped[str] = mapped_column(String(10), server_default="open")
+    release_reason: Mapped[str | None] = mapped_column(String(500))
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT")
+    )

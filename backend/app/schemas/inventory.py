@@ -222,3 +222,67 @@ class OperationRead(BaseModel):
     movements: list[MovementRead]
     # Lines whose counted quantity already matched; nothing was recorded for them.
     unchanged_part_ids: list[uuid.UUID] = []
+
+
+# --------------------------------------------------------------------------- job parts
+
+
+class JobPartLine(Schema):
+    part_id: uuid.UUID
+    quantity: Quantity
+
+
+class JobPartsRequest(Schema):
+    location_id: uuid.UUID
+    lines: list[JobPartLine] = Field(min_length=1, max_length=50)
+
+
+class JobPartsReturn(JobPartsRequest):
+    reason: Reason
+
+
+class ReleaseRequest(Schema):
+    reason: Reason
+
+
+class ReservationRead(BaseModel):
+    id: uuid.UUID
+    part: Ref
+    sku: str
+    unit: Unit
+    location: Ref
+    quantity: Decimal
+    issued_quantity: Decimal
+    released_quantity: Decimal
+    outstanding: Decimal
+    status: Literal["open", "closed"]
+    release_reason: str | None
+    created_by: str
+    created_at: datetime
+
+
+class UsedPartRead(BaseModel):
+    part: Ref
+    sku: str
+    unit: Unit
+    issued: Decimal  # net of returns
+    selling_price: Decimal
+    value: Decimal  # issued x current selling price, for reference; not an invoice amount
+
+
+class JobPartsCapabilities(BaseModel):
+    reserve: bool
+    issue: bool
+    return_parts: bool
+    release: bool
+
+
+class JobPartsRead(BaseModel):
+    job_card_id: uuid.UUID
+    authorised: bool
+    currency_code: str
+    capabilities: JobPartsCapabilities
+    locations: list[Ref]
+    reservations: list[ReservationRead]
+    used: list[UsedPartRead]
+    movements: list[MovementRead]

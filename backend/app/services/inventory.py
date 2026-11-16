@@ -84,7 +84,7 @@ def _in(column: Any, branches: set[uuid.UUID] | None) -> list[Any]:
     return [] if branches is None else [column.in_(branches)]
 
 
-def _location(
+def get_location(
     db: Session, principal: Principal, location_id: uuid.UUID, *, active: bool = True
 ) -> StockLocation:
     loc = db.scalar(
@@ -100,7 +100,7 @@ def _location(
     return loc
 
 
-def _check_whole(part: Part, quantity: Decimal) -> None:
+def check_whole(part: Part, quantity: Decimal) -> None:
     if part.unit in WHOLE_UNITS and quantity != quantity.to_integral_value():
         raise ConflictError(
             f"{part.sku} is counted in whole units ({part.unit}).",
@@ -108,7 +108,9 @@ def _check_whole(part: Part, quantity: Decimal) -> None:
         )
 
 
-def _parts(db: Session, principal: Principal, ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, Part]:
+def load_parts(
+    db: Session, principal: Principal, ids: Iterable[uuid.UUID]
+) -> dict[uuid.UUID, Part]:
     wanted = list(ids)
     if len(set(wanted)) != len(wanted):
         raise ConflictError("Each part may appear only once.")
@@ -529,7 +531,7 @@ def create_location(db: Session, principal: Principal, body: LocationCreate) -> 
 def update_location(
     db: Session, principal: Principal, location_id: uuid.UUID, body: LocationUpdate
 ) -> LocationRead:
-    loc = _location(db, principal, location_id, active=False)
+    loc = get_location(db, principal, location_id, active=False)
     principal.require(P.INVENTORY_ADJUST, loc.branch_id)
     loc.name = body.name
     try:
@@ -544,7 +546,7 @@ def update_location(
 def set_location_archived(
     db: Session, principal: Principal, location_id: uuid.UUID, archived: bool
 ) -> LocationRead:
-    loc = _location(db, principal, location_id, active=False)
+    loc = get_location(db, principal, location_id, active=False)
     principal.require(P.INVENTORY_ADJUST, loc.branch_id)
     if archived:
         if loc.is_default:
@@ -579,11 +581,11 @@ def set_min_level(
     body: MinLevelUpdate,
 ) -> PartRead:
     part = _load_part(db, principal, part_id)
-    loc = _location(db, principal, location_id)
+    loc = get_location(db, principal, location_id)
     principal.require(P.INVENTORY_ADJUST, loc.branch_id)
     if body.min_quantity is not None:
-        _check_whole(part, body.min_quantity)
-    level = _lock_levels(db, [(loc, part.id)])[(loc.id, part.id)]
+        check_whole(part, body.min_quantity)
+    level = lock_levels(db, [(loc, part.id)])[(loc.id, part.id)]
     before = level.min_quantity
     level.min_quantity = body.min_quantity
     audit.record(
@@ -604,7 +606,7 @@ def set_min_level(
 # --------------------------------------------------------------------------- operations
 
 
-def _lock_levels(
+def lock_levels(
     db: Session, pairs: list[tuple[StockLocation, uuid.UUID]]
 ) -> dict[tuple[uuid.UUID, uuid.UUID], StockLevel]:
     """Create missing stock-level rows (at zero) and lock all of them in a fixed order."""
@@ -721,11 +723,11 @@ def adjust(
     print_ = fingerprint({"op": "adjustment", **body.model_dump(mode="json")})
     if (done := replay(db, principal, key, print_)) is not None:
         return done, False
-    loc = _location(db, principal, body.location_id)
+    loc = get_location(db, principal, body.location_id)
     principal.require(P.INVENTORY_ADJUST, loc.branch_id)
-    parts = _parts(db, principal, [line.part_id for line in body.lines])
+    parts = load_parts(db, principal, [line.part_id for line in body.lines])
     for line in body.lines:
-        _check_whole(
+        check_whole(
             parts[line.part_id],
             line.counted if line.counted is not None else abs(line.change or ZERO),
         )
@@ -735,7 +737,7 @@ def adjust(
     )
     if op is None:
         return replay(db, principal, key, print_), False  # type: ignore[return-value]
-    levels = _lock_levels(db, [(loc, pid) for pid in parts])
+    levels = lock_levels(db, [(loc, pid) for pid in parts])
     had_movements = set(
         db.scalars(
             select(StockMovement.part_id).where(
@@ -794,18 +796,18 @@ def transfer(
         return done, False
     if body.from_location_id == body.to_location_id:
         raise ConflictError("Choose two different locations.")
-    src = _location(db, principal, body.from_location_id)
-    dst = _location(db, principal, body.to_location_id)
+    src = get_location(db, principal, body.from_location_id)
+    dst = get_location(db, principal, body.to_location_id)
     principal.require(P.INVENTORY_TRANSFER, src.branch_id)
     principal.require(P.INVENTORY_TRANSFER, dst.branch_id)
-    parts = _parts(db, principal, [line.part_id for line in body.lines])
+    parts = load_parts(db, principal, [line.part_id for line in body.lines])
     for line in body.lines:
-        _check_whole(parts[line.part_id], line.quantity)
+        check_whole(parts[line.part_id], line.quantity)
 
     op = start_operation(db, principal, kind="transfer", key=key, print_=print_, reason=body.reason)
     if op is None:
         return replay(db, principal, key, print_), False  # type: ignore[return-value]
-    levels = _lock_levels(db, [(loc, pid) for pid in parts for loc in (src, dst)])
+    levels = lock_levels(db, [(loc, pid) for pid in parts for loc in (src, dst)])
     for line in body.lines:
         part = parts[line.part_id]
         level = levels[(src.id, part.id)]
@@ -835,7 +837,7 @@ def transfer(
 # --------------------------------------------------------------------------- movements
 
 
-def _movement_rows(db: Session, conditions: list[Any]) -> Any:
+def movement_rows(db: Session, conditions: list[Any]) -> Any:
     return (
         select(
             StockMovement,
@@ -858,7 +860,7 @@ def _movement_rows(db: Session, conditions: list[Any]) -> Any:
     )
 
 
-def _movement_read(row: Any, costs: bool) -> MovementRead:
+def movement_read(row: Any, costs: bool) -> MovementRead:
     m, part_name, sku, loc_name, branch_name, user, reason, reference, job_number = row
     return MovementRead(
         id=m.id,
@@ -881,7 +883,7 @@ def _movement_read(row: Any, costs: bool) -> MovementRead:
 
 def operation_read(db: Session, principal: Principal, op: StockOperation) -> OperationRead:
     rows = db.execute(
-        _movement_rows(db, [StockMovement.operation_id == op.id]).order_by(
+        movement_rows(db, [StockMovement.operation_id == op.id]).order_by(
             StockMovement.created_at, StockMovement.id
         )
     ).all()
@@ -891,7 +893,7 @@ def operation_read(db: Session, principal: Principal, op: StockOperation) -> Ope
         kind=op.kind,
         reason=op.reason,
         created_at=op.created_at,
-        movements=[_movement_read(r, costs) for r in rows],
+        movements=[movement_read(r, costs) for r in rows],
     )
 
 
@@ -928,10 +930,10 @@ def list_movements(
         conditions.append(StockMovement.created_at < date_to)
     total = db.scalar(select(func.count()).select_from(StockMovement).where(*conditions)) or 0
     rows = db.execute(
-        _movement_rows(db, conditions)
+        movement_rows(db, conditions)
         .order_by(StockMovement.created_at.desc(), StockMovement.id)
         .limit(params.page_size)
         .offset(params.offset)
     ).all()
     costs = can_see_costs(principal)
-    return [_movement_read(r, costs) for r in rows], total
+    return [movement_read(r, costs) for r in rows], total

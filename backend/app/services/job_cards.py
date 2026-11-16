@@ -777,6 +777,17 @@ def transition(
         job.handover_notes = body.handover_notes
     if target == JobStatus.CANCELLED:
         job.cancellation_reason = body.cancellation_reason
+    if target in TERMINAL:
+        # Stock held for this job goes back to the shelf (imported here: job_parts
+        # depends on this module).
+        from app.services.job_parts import release_all_for_job
+
+        release_all_for_job(
+            db,
+            principal,
+            job,
+            "Job cancelled" if target == JobStatus.CANCELLED else "Job completed",
+        )
     note = (
         body.note
         or body.cancellation_reason

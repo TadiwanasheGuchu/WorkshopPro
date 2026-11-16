@@ -39,6 +39,7 @@ from app.models.inventory import (
     StockLocation,
     StockMovement,
     StockOperation,
+    StockReservation,
 )
 from app.models.invoice import (
     CreditNote,
@@ -113,6 +114,7 @@ __all__ = [
     "StockLocation",
     "StockMovement",
     "StockOperation",
+    "StockReservation",
     "StoredFile",
     "TaxRate",
     "User",
