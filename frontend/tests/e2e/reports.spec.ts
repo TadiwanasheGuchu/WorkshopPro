@@ -28,4 +28,9 @@ test("reports: financial and operations with explicit periods", async ({ page })
   await expect(page.getByRole("heading", { name: "Mechanic workload" })).toBeVisible();
   await page.getByText("How these figures are calculated").click();
   await expect(page.getByText("Time from vehicle received to completed")).toBeVisible();
+
+  await page.getByRole("link", { name: "Inventory", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /^Stock value as at / })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Stock check" })).toBeVisible();
+  await expect(page.getByText("Stock matches the ledger")).toBeVisible();
 });

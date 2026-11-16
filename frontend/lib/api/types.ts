@@ -948,3 +948,23 @@ export interface PurchaseOrder extends PoListItem {
   locations: Ref[];
   capabilities: { edit: boolean; approve: boolean; receive: boolean; return_goods: boolean; cancel: boolean; close: boolean };
 }
+
+export interface InventoryReport {
+  period: ReportPeriod;
+  branch: Ref | null;
+  currency_code: string;
+  valuation: {
+    as_at: string;
+    total_value: string;
+    parts_in_stock: number;
+    units: string;
+    by_location: { location: Ref; branch: Ref; units: string; value: string }[];
+    by_category: { category: string; parts: number; units: string; value: string }[];
+  };
+  low_stock_parts: number;
+  movements: { kind: MovementKind; count: number; quantity: string; value: string }[];
+  usage: { part: Ref; sku: string; quantity: string; cost_value: string }[];
+  purchasing: { orders_approved: number; approved_value: string; received_value: string; returned_value: string; open_orders: number; open_value: string; overdue_orders: number };
+  reconciliation: { stock_levels_checked: number; on_hand_mismatches: number; reserved_mismatches: number };
+  definitions: { term: string; definition: string }[];
+}

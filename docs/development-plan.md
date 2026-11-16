@@ -93,14 +93,16 @@ Rules worth knowing:
 - Balance due = total − credited − paid. A negative balance is an overpayment and can only be paid back as a refund against that invoice.
 - A partial credit note is recorded without tax; to reverse taxed lines, credit the whole invoice and issue a corrected one. Refunding unapplied credit that is not on an invoice is not supported yet (reverse the payment instead if it was recorded in error).
 
-## Phase 4 — Inventory and procurement — `in progress`
+## Phase 4 — Inventory and procurement — `done`
 
 | # | Deliverable | Status |
 |---|---|---|
 | 4a | Parts catalogue (categories, units, cost and selling price, tax), stock locations per branch (default store created with every branch), append-only stock movement ledger maintained by database trigger, opening stock and stocktake adjustments with mandatory reason, transfers of available stock, minimum levels and low-stock filter, movement ledger screen. Every stock-changing request needs an Idempotency-Key. | done |
 | 4b | Reserve stock for authorised jobs (approved quotation or approval exception), issue parts when fitted (drawing on the job's reservations first), returns limited to what was issued, manual release, automatic release when a job is completed or cancelled; Parts panel on the job card | done |
 | 4c | Suppliers with their part codes, prices and lead times; purchase orders (draft, approved, partly received, received, closed short, cancelled) with approval; goods received notes for partial deliveries with delivery-note and supplier-invoice references and discrepancy notes; returns to supplier; purchase order PDF | done |
-| 4d | Stock valuation, ledger reconciliation and purchasing reports | next |
+| 4d | Inventory report (permission `reports.inventory`, migration 0013): stock value at cost by location and category as at today, low-stock count, movements by type with cost value, most-used parts, purchasing (approved, received, returned, still on order, overdue), and a stock check comparing every stock level with its ledger and open reservations | done |
+
+**Exit:** met. A workshop orders parts from a supplier, receives partial and full deliveries into stock, reserves and issues parts to authorised jobs, returns parts, and the stock check confirms every stock level matches the movement ledger (`backend/tests/test_purchasing.py`, `test_job_parts.py`, `test_reports.py::test_inventory_report`; Playwright `purchasing.spec.ts`, `job-parts.spec.ts`).
 
 Rules worth knowing:
 - `stock_movements` is the source of truth. `stock_levels.on_hand` changes only through the movement trigger (`stock_movement_apply`); direct updates, deletes and edits to movements are rejected by the database.
@@ -114,7 +116,7 @@ Rules worth knowing:
 - Purchase order amounts exclude tax. Supplier payments and balances owed to suppliers are not recorded (WorkshopPro is not a general ledger); GRNs keep the supplier's invoice reference for reconciliation in the accounting system.
 - Issued parts are not added to invoices automatically yet: the invoice is prefilled from the approved quotation, and the Parts panel shows what was fitted so staff can reconcile before issuing.
 
-## Phase 5 — Customer experience and communications — `planned`
+## Phase 5 — Customer experience and communications — `next`
 
 Customer portal with strict ownership scoping, public approval tokens, appointment requests, WhatsApp Business Platform + email adaptors behind an interface, templates, consent, delivery logs, retries, service reminders.
 

@@ -61,6 +61,7 @@ class P(StrEnum):
     PAYMENTS_REFUND = "payments.refund"
     REPORTS_OPERATIONAL = "reports.operational"
     REPORTS_FINANCIAL = "reports.financial"
+    REPORTS_INVENTORY = "reports.inventory"
     INVENTORY_VIEW = "inventory.view"
     INVENTORY_CATALOGUE = "inventory.catalogue"
     INVENTORY_ADJUST = "inventory.adjust"
@@ -314,6 +315,13 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         Scope.BRANCH,
     ),
     PermissionDef(
+        P.REPORTS_INVENTORY,
+        "Reports",
+        "View inventory reports",
+        "Stock valuation at cost, stock movements, parts usage, purchasing and ledger checks.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
         P.INVENTORY_VIEW,
         "Inventory",
         "View parts and stock",
@@ -445,6 +453,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.PAYMENTS_REFUND,
                 P.REPORTS_OPERATIONAL,
                 P.REPORTS_FINANCIAL,
+                P.REPORTS_INVENTORY,
                 P.INVENTORY_VIEW,
                 P.INVENTORY_TRANSFER,
                 P.INVENTORY_ISSUE,
@@ -514,6 +523,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.SUPPLIERS_MANAGE,
                 P.PURCHASING_MANAGE,
                 P.PURCHASING_RECEIVE,
+                P.REPORTS_INVENTORY,
             }
         ),
     ),
@@ -534,6 +544,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.PAYMENTS_RECORD,
                 P.PAYMENTS_REFUND,
                 P.REPORTS_FINANCIAL,
+                P.REPORTS_INVENTORY,
                 P.INVENTORY_VIEW,
                 P.SUPPLIERS_VIEW,
             }

@@ -159,3 +159,96 @@ def test_report_permissions_and_branch_scope(
     b.login(beta.owner_email)
     assert _fin(b).json()["invoiced"]["count"] == 0
     assert _fin(b, branch_id=str(org.branch_id)).status_code == 404
+
+
+def _inv(api: Api, **params: Any) -> Any:
+    today = datetime.now(ZoneInfo("Africa/Windhoek")).date()
+    params.setdefault("date_from", (today - timedelta(days=1)).isoformat())
+    params.setdefault("date_to", (today + timedelta(days=1)).isoformat())
+    return api.get("/reports/inventory", params=params)
+
+
+def test_inventory_report(owner_api: Api, job: dict[str, Any], org: OrgFixture, db: Any) -> None:
+    from sqlalchemy import text as sql
+
+    from tests.test_inventory import _adjust, _main, _part
+    from tests.test_purchasing import _approve, _order, _receive, _supplier
+
+    cat = owner_api.post("/inventory/categories", json={"name": "Brakes"}).json()
+    pads = _part(owner_api, category_id=cat["id"])  # cost 520
+    oil = _part(owner_api, sku="OIL", unit="litre", cost_price="100.00")
+    loc = _main(owner_api)
+    _adjust(owner_api, loc["id"], [{"part_id": pads["id"], "counted": "2"}])
+    supplier = _supplier(owner_api)
+    po = _approve(
+        owner_api,
+        _order(
+            owner_api,
+            org,
+            supplier,
+            [{"part_id": oil["id"], "quantity": "10", "unit_cost": "90.00"}],
+        ),
+    )
+    _receive(
+        owner_api, po, loc["id"], [(po["lines"][0]["id"], "6")]
+    )  # 540 received; 4 x 90 = 360 open
+    issued = owner_api.post(
+        f"/job-cards/{job['id']}/parts/issues",
+        headers={"Idempotency-Key": uuid.uuid4().hex},
+        json={"location_id": loc["id"], "lines": [{"part_id": pads["id"], "quantity": "1"}]},
+    )
+    assert issued.status_code == 201, issued.text
+    owner_api.put(f"/inventory/parts/{oil['id']}/levels/{loc['id']}", json={"min_quantity": "6"})
+
+    res = _inv(owner_api)
+    assert res.status_code == 200, res.text
+    r = res.json()
+    v = r["valuation"]
+    # 1 pad x 520 + 6 litres x 90 (cost price followed the receipt) = 1060
+    assert (v["total_value"], v["parts_in_stock"], v["units"]) == ("1060.00", 2, "7.00")
+    assert {c["category"]: c["value"] for c in v["by_category"]} == {
+        "Uncategorised": "540.00",
+        "Brakes": "520.00",
+    }
+    assert r["low_stock_parts"] == 1
+    kinds = {m["kind"]: (m["count"], m["quantity"], m["value"]) for m in r["movements"]}
+    assert kinds["opening"] == (1, "2.00", "1040.00")
+    assert kinds["receipt"] == (1, "6.00", "540.00")
+    assert kinds["issue"] == (1, "-1.00", "-520.00")
+    assert r["usage"] == [
+        {
+            "part": {"id": pads["id"], "name": "Brake pad set"},
+            "sku": "BP-1234",
+            "quantity": "1.00",
+            "cost_value": "520.00",
+        }
+    ]
+    p = r["purchasing"]
+    assert (p["orders_approved"], p["approved_value"], p["received_value"]) == (
+        1,
+        "900.00",
+        "540.00",
+    )
+    assert (p["open_orders"], p["open_value"], p["overdue_orders"]) == (1, "360.00", 0)
+    assert r["reconciliation"]["on_hand_mismatches"] == 0
+    assert r["reconciliation"]["reserved_mismatches"] == 0
+    assert r["reconciliation"]["stock_levels_checked"] == 2
+
+    # The stock check catches a drifted reservation (simulated directly in the database).
+    db.execute(sql("UPDATE stock_levels SET reserved = 1 WHERE part_id = :p"), {"p": oil["id"]})
+    db.commit()
+    assert _inv(owner_api).json()["reconciliation"]["reserved_mismatches"] == 1
+
+
+def test_inventory_report_permissions(owner_api: Api, org: OrgFixture, new_api: Any) -> None:
+    for role, expected in (
+        ("inventory_manager", 200),
+        ("accounts", 200),
+        ("service_advisor", 403),
+        ("mechanic", 403),
+    ):
+        email = f"{role}@example.com"
+        org.add_user(email, [(org.role(role), org.branch_id)])
+        a: Api = new_api()
+        a.login(email)
+        assert _inv(a).status_code == expected, role

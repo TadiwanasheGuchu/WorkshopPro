@@ -4,7 +4,7 @@ from datetime import date
 from fastapi import APIRouter
 
 from app.api.deps import CurrentPrincipal, DbSession
-from app.schemas.report import FinancialReport, OperationsReport
+from app.schemas.report import FinancialReport, InventoryReport, OperationsReport
 from app.services import reports
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -47,3 +47,22 @@ def operations(
     branch_id: uuid.UUID | None = None,
 ) -> OperationsReport:
     return reports.operations(db, principal, date_from, date_to, branch_id)
+
+
+@router.get(
+    "/inventory",
+    response_model=InventoryReport,
+    summary="Inventory report for a period",
+    description=(
+        "Stock valuation at cost and the stock check are as at today; movements, parts used "
+        "and purchasing cover the period. See `definitions` in the response."
+    ),
+)
+def inventory(
+    principal: CurrentPrincipal,
+    db: DbSession,
+    date_from: date,
+    date_to: date,
+    branch_id: uuid.UUID | None = None,
+) -> InventoryReport:
+    return reports.inventory(db, principal, date_from, date_to, branch_id)

@@ -6,17 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form";
 import { NoAccess, PageHeader, Panel, PanelSkeleton, TabNav } from "@/components/ui/page";
 import { apiGet, query } from "@/lib/api/server";
-import type { FinancialReport, JobStatus, Me, OperationsReport } from "@/lib/api/types";
+import type { FinancialReport, InventoryReport, JobStatus, Me, OperationsReport } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { formatDate, formatMoney } from "@/lib/format";
 import { PAYMENT_METHOD } from "@/lib/invoice";
+import { MOVEMENT_LABEL, qty, signedQty } from "@/lib/inventory";
 import { JOB_STATUS_LABEL } from "@/lib/job-status";
 import { isDate, localToday, presets } from "@/lib/period";
 import { P, canInAnyBranch } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "Reports" };
 
-type View = "financial" | "operations";
+type View = "financial" | "operations" | "inventory";
+const VIEW_LABEL: Record<View, string> = { financial: "Financial", operations: "Operations", inventory: "Inventory" };
 
 export default function ReportsPage({ searchParams }: PageProps<"/reports">) {
   return (
@@ -31,6 +33,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/reports">["
   const views: View[] = [];
   if (canInAnyBranch(me, P.REPORTS_FINANCIAL)) views.push("financial");
   if (canInAnyBranch(me, P.REPORTS_OPERATIONAL)) views.push("operations");
+  if (canInAnyBranch(me, P.REPORTS_INVENTORY)) views.push("inventory");
   if (!views.length) return <NoAccess />;
 
   const params = await searchParams;
@@ -48,7 +51,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/reports">["
       <PageHeader title="Reports" description={`Dates are inclusive, in ${me.organisation.timezone} time.`} />
       {views.length > 1 ? (
         <TabNav
-          tabs={views.map((v) => ({ href: href({ view: v }), label: v === "financial" ? "Financial" : "Operations" }))}
+          tabs={views.map((v) => ({ href: href({ view: v }), label: VIEW_LABEL[v] }))}
           active={href({ view })}
         />
       ) : null}
@@ -88,8 +91,10 @@ async function Content({ searchParams }: { searchParams: PageProps<"/reports">["
 
       {view === "financial" ? (
         <Financial me={me} params={{ date_from: from, date_to: to, branch_id: branch }} />
-      ) : (
+      ) : view === "operations" ? (
         <Operations me={me} params={{ date_from: from, date_to: to, branch_id: branch }} />
+      ) : (
+        <Inventory me={me} params={{ date_from: from, date_to: to, branch_id: branch }} />
       )}
     </>
   );
@@ -300,6 +305,99 @@ async function Operations({ me, params }: { me: Me; params: Params }) {
               </tbody>
             </table>
           )}
+        </Panel>
+      </div>
+      <Definitions items={r.definitions} />
+    </>
+  );
+}
+
+async function Inventory({ me, params }: { me: Me; params: Params }) {
+  const r = await apiGet<InventoryReport>(`/reports/inventory${query(params)}`);
+  const c = r.currency_code;
+  const m = (v: string) => formatMoney(v, c);
+  const prefs = me.organisation;
+  const period = `${formatDate(r.period.date_from, prefs)} to ${formatDate(r.period.date_to, prefs)}`;
+  const v = r.valuation;
+  const rec = r.reconciliation;
+  const reconciled = rec.on_hand_mismatches === 0 && rec.reserved_mismatches === 0;
+  const p = r.purchasing;
+
+  return (
+    <>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel title={`Stock value as at ${formatDate(v.as_at, prefs)}`} flush>
+          <Figures
+            rows={[
+              ...v.by_location.map((l) => ({ label: `${l.location.name} · ${l.branch.name} (${qty(l.units)} units)`, value: m(l.value) })),
+              { label: `Parts in stock (${v.parts_in_stock})`, value: m(v.total_value), strong: true },
+              { label: "Parts at or below minimum", value: r.low_stock_parts, href: "/inventory/parts?low=1" },
+            ]}
+          />
+        </Panel>
+        <Panel title="Value by category" flush>
+          {v.by_category.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-muted">No stock on hand.</p>
+          ) : (
+            <Figures rows={v.by_category.map((x) => ({ label: `${x.category} (${x.parts} ${x.parts === 1 ? "part" : "parts"})`, value: m(x.value) }))} />
+          )}
+        </Panel>
+        <Panel title={`Stock movements · ${period}`} flush>
+          {r.movements.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-muted">No stock movements in this period.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="border-b border-border text-xs text-muted">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">Type</th>
+                  <th className="px-4 py-2 text-right font-medium">Quantity</th>
+                  <th className="px-4 py-2 text-right font-medium">Value at cost</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {r.movements.map((row) => (
+                  <tr key={row.kind}>
+                    <td className="px-4 py-2">
+                      <Link href={`/inventory/movements?kind=${row.kind}`} className="text-steel hover:underline">
+                        {MOVEMENT_LABEL[row.kind]}
+                      </Link>{" "}
+                      <span className="text-xs text-muted">({row.count})</span>
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums">{signedQty(row.quantity)}</td>
+                    <td className="px-4 py-2 text-right font-mono whitespace-nowrap tabular-nums">{m(row.value)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Panel>
+        <Panel title={`Purchasing · ${period}`} flush>
+          <Figures
+            rows={[
+              { label: `Orders approved (${p.orders_approved})`, value: m(p.approved_value) },
+              { label: "Deliveries received", value: m(p.received_value) },
+              { label: "Returned to suppliers", value: m(p.returned_value) },
+              { label: `Still on order now (${p.open_orders})`, value: m(p.open_value), href: "/purchase-orders?status=open" },
+              { label: "Overdue orders now", value: p.overdue_orders },
+            ]}
+          />
+        </Panel>
+        <Panel title={`Most used parts · ${period}`} flush>
+          {r.usage.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-muted">No parts issued to jobs in this period.</p>
+          ) : (
+            <Figures rows={r.usage.map((u) => ({ label: `${u.sku} ${u.part.name} (${qty(u.quantity)})`, value: m(u.cost_value), href: `/inventory/parts/${u.part.id}` }))} />
+          )}
+        </Panel>
+        <Panel title="Stock check" flush>
+          <Figures
+            rows={[
+              { label: "Stock levels checked", value: rec.stock_levels_checked },
+              { label: "On hand differs from ledger", value: rec.on_hand_mismatches },
+              { label: "Reserved differs from open reservations", value: rec.reserved_mismatches },
+              { label: reconciled ? "Stock matches the ledger" : "Differences found: contact support", value: reconciled ? "OK" : "Check", strong: true },
+            ]}
+          />
         </Panel>
       </div>
       <Definitions items={r.definitions} />

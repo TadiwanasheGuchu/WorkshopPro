@@ -103,3 +103,72 @@ class OperationsReport(BaseModel):
     quotations: QuotationOutcomes
     mechanics: list[MechanicRow]
     definitions: list[Definition]
+
+
+# --------------------------------------------------------------------------- inventory
+
+
+class LocationValue(BaseModel):
+    location: Ref
+    branch: Ref
+    units: Decimal
+    value: Decimal
+
+
+class CategoryValue(BaseModel):
+    category: str
+    parts: int
+    units: Decimal
+    value: Decimal
+
+
+class Valuation(BaseModel):
+    as_at: date
+    total_value: Decimal
+    parts_in_stock: int
+    units: Decimal
+    by_location: list[LocationValue]
+    by_category: list[CategoryValue]
+
+
+class MovementSummary(BaseModel):
+    kind: str
+    count: int
+    quantity: Decimal
+    value: Decimal  # signed: quantity x unit cost at the time
+
+
+class PartUsage(BaseModel):
+    part: Ref
+    sku: str
+    quantity: Decimal
+    cost_value: Decimal
+
+
+class PurchasingSummary(BaseModel):
+    orders_approved: int
+    approved_value: Decimal
+    received_value: Decimal
+    returned_value: Decimal
+    open_orders: int
+    open_value: Decimal
+    overdue_orders: int
+
+
+class Reconciliation(BaseModel):
+    stock_levels_checked: int
+    on_hand_mismatches: int
+    reserved_mismatches: int
+
+
+class InventoryReport(BaseModel):
+    period: Period
+    branch: Ref | None
+    currency_code: str
+    valuation: Valuation
+    low_stock_parts: int
+    movements: list[MovementSummary]
+    usage: list[PartUsage]
+    purchasing: PurchasingSummary
+    reconciliation: Reconciliation
+    definitions: list[Definition]

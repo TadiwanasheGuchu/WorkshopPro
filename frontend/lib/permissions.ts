@@ -35,6 +35,7 @@ export const P = {
   PAYMENTS_REFUND: "payments.refund",
   REPORTS_OPERATIONAL: "reports.operational",
   REPORTS_FINANCIAL: "reports.financial",
+  REPORTS_INVENTORY: "reports.inventory",
   INVENTORY_VIEW: "inventory.view",
   INVENTORY_CATALOGUE: "inventory.catalogue",
   INVENTORY_ADJUST: "inventory.adjust",

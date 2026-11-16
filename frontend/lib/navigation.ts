@@ -74,7 +74,7 @@ export function navigationFor(me: Me): NavGroup[] {
     finance.push({ href: "/payments", label: "Payments", icon: "payments" });
   }
   if (finance.length) groups.push({ label: "Finance", items: finance });
-  if (canInAnyBranch(me, P.REPORTS_FINANCIAL) || canInAnyBranch(me, P.REPORTS_OPERATIONAL)) {
+  if (canInAnyBranch(me, P.REPORTS_FINANCIAL) || canInAnyBranch(me, P.REPORTS_OPERATIONAL) || canInAnyBranch(me, P.REPORTS_INVENTORY)) {
     groups.push({ label: "Analytics", items: [{ href: "/reports", label: "Reports", icon: "reports" }] });
   }
   if (admin.length) groups.push({ label: "Administration", items: admin });
