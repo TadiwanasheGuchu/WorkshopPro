@@ -76,6 +76,9 @@ test("quotation: prepare, send, customer approves online, repair unlocks", async
   await page.goto(jobUrl);
   await expect(page.getByRole("button", { name: "Start repair" })).toBeDisabled();
 
+  const [download] = await Promise.all([customer.waitForEvent("download"), customer.getByRole("button", { name: "Download PDF" }).click()]);
+  expect(download.suggestedFilename()).toMatch(/^QT-\d+-v1\.pdf$/);
+
   await customer.getByLabel("Your full name").fill(`Selma Quote${run}`);
   await customer.getByRole("checkbox").check();
   await customer.getByRole("button", { name: "Approve quotation" }).click();

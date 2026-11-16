@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { DocumentLines } from "@/components/app/document-lines";
+import { PdfLink } from "@/components/app/pdf-link";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
@@ -57,7 +58,12 @@ async function Content({ params }: { params: PageProps<"/invoices/[id]">["params
           </>
         }
         back={{ href: "/invoices", label: "Invoices" }}
-        actions={<StatusBadge tone={st.tone}>{st.label}</StatusBadge>}
+        actions={
+          <span className="flex items-center gap-2">
+            <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
+            <PdfLink href={`/invoices/${inv.id}/pdf`} />
+          </span>
+        }
       />
 
       {editing && inv.quotation_version_id ? (
@@ -130,7 +136,10 @@ async function Content({ params }: { params: PageProps<"/invoices/[id]">["params
                         {formatDate(cn.issue_date, prefs)} · {cn.created_by} · {cn.reason}
                       </span>
                     </span>
-                    <span className="font-mono tabular-nums">{formatMoney(cn.total, c)}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono tabular-nums">{formatMoney(cn.total, c)}</span>
+                      <PdfLink href={`/credit-notes/${cn.id}/pdf`} label={`${cn.credit_note_number} PDF`} />
+                    </span>
                   </li>
                 ))}
               </ul>

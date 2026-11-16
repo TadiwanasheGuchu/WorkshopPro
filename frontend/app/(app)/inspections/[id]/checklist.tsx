@@ -2,6 +2,8 @@
 
 import { Camera, ChevronDown, Trash2 } from "lucide-react";
 import Link from "next/link";
+
+import { PdfLink } from "@/components/app/pdf-link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -305,9 +307,12 @@ export function Checklist({ inspection }: { inspection: InspectionDetail }) {
             </section>
           ) : null}
           {inspection.capabilities.amend ? <AmendButton inspection={inspection} /> : null}
-          <Link href={`/inspections/${inspection.id}/print`} className="inline-block text-sm text-steel hover:underline">
-            Customer report (print)
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <PdfLink href={`/inspections/${inspection.id}/pdf`} label="Customer report (PDF)" />
+            <Link href={`/inspections/${inspection.id}/print`} className="text-sm text-steel hover:underline">
+              Print view
+            </Link>
+          </div>
         </>
       )}
     </div>

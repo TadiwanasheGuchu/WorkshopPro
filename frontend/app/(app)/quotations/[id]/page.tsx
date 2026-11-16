@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { DocumentLines } from "@/components/app/document-lines";
+import { PdfLink } from "@/components/app/pdf-link";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
@@ -50,7 +51,12 @@ async function Content({ params }: { params: PageProps<"/quotations/[id]">["para
           </>
         }
         back={{ href: "/quotations", label: "Quotations" }}
-        actions={<StatusBadge tone={st.tone}>{st.label}</StatusBadge>}
+        actions={
+          <span className="flex items-center gap-2">
+            <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
+            <PdfLink href={`/quotations/${q.id}/pdf`} />
+          </span>
+        }
       />
 
       {v.revision_reason ? (

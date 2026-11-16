@@ -62,3 +62,20 @@ export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
   if (!res.ok) throw await toApiError(res);
   return (await res.json()) as T;
 }
+
+/** POST that returns a file (e.g. the customer's quotation PDF) and saves it. */
+export async function downloadFile(path: string, body: unknown, filename: string): Promise<void> {
+  const res = await fetch(`/api/v1${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-csrf-token": await csrfToken() },
+    body: JSON.stringify(body),
+    credentials: "same-origin",
+  });
+  if (!res.ok) throw await toApiError(res);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

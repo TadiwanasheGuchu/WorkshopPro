@@ -1,5 +1,6 @@
 "use client";
 
+import { FileDown } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { StatusBadge } from "@/components/status-badge";
@@ -7,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/page";
-import { api } from "@/lib/api/client";
+import { api, downloadFile } from "@/lib/api/client";
 import { errorMessage } from "@/lib/api/errors";
 import type { PublicQuotation } from "@/lib/api/types";
 import { formatMoney } from "@/lib/format";
@@ -90,7 +91,10 @@ export function QuoteView() {
             Quotation <span className="font-mono">{q.quote_number}</span>
             {q.version_number > 1 ? <span className="text-sm font-normal text-muted"> (version {q.version_number})</span> : null}
           </h1>
-          <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
+          <span className="flex items-center gap-2">
+            <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
+            <DownloadPdf token={token} filename={`${q.quote_number}-v${q.version_number}.pdf`} />
+          </span>
         </div>
         <p className="text-sm">
           For {q.customer_name} · {q.vehicle}
@@ -165,5 +169,32 @@ export function QuoteView() {
         </Alert>
       )}
     </article>
+  );
+}
+
+function DownloadPdf({ token, filename }: { token: string; filename: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <>
+      <Button
+        size="sm"
+        loading={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError(null);
+          try {
+            await downloadFile("/public/quotations/pdf", { token }, filename);
+          } catch (e) {
+            setError(errorMessage(e));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <FileDown className="size-4" aria-hidden /> Download PDF
+      </Button>
+      {error ? <span className="text-xs text-status-danger">{error}</span> : null}
+    </>
   );
 }

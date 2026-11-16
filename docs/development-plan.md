@@ -23,7 +23,7 @@ Status key: `done`, `in progress`, `next`, `planned`.
 
 **Exit:** clone → copy `.env.example` → `docker compose up -d --build` → frontend on :3000 shows API and database healthy.
 
-Deliberately deferred: Celery worker (added in Phase 3 for PDFs / Phase 5 for messaging), object storage (added in Phase 2 with photo uploads), Nginx (Phase 6), shadcn/ui components (added per screen from Phase 1).
+Deliberately deferred: Celery worker (Phase 5 for messaging; PDFs are generated on request, see ADR 0005), object storage (added in Phase 2 with photo uploads), Nginx (Phase 6), shadcn/ui components (added per screen from Phase 1).
 
 ---
 
@@ -48,7 +48,7 @@ Deliberately deferred: Celery worker (added in Phase 3 for PDFs / Phase 5 for me
 
 Deferred:
 - Organisation logo upload (needs object storage, Phase 2).
-- Email retries (Celery, Phase 3/5). Until then a failed send is logged and an admin can resend the invitation.
+- Email retries (Celery, Phase 5). Until then a failed send is logged and an admin can resend the invitation.
 - Session list / "sign out other devices" screen.
 - Generated OpenAPI types for the frontend.
 
@@ -83,8 +83,8 @@ Deferred:
 |---|---|---|
 | 3a | Quotations: versions, server-calculated lines and configurable tax, send with single-use customer link, online or staff-recorded decision bound to exact version and total, revisions supersede approvals, approval unlocks repair | done |
 | 3b | Invoices: drafts prefilled from the approved quotation, issue after quality inspection, number and due date from payment terms, immutable once issued (database trigger). Credit notes (full or amount, never more than remains). Payments with mandatory Idempotency-Key, locked allocations, customer credit, reversals and overpayment refunds, append-only. Customer balance. | done |
-| 3c | Server-side PDFs: quotation, invoice, receipt, inspection report | next |
-| 3d | Basic reports: jobs by status, invoiced revenue vs payments received vs receivables, explicit date ranges and metric definitions | planned |
+| 3c | Server-side PDFs (ReportLab, generated on request; ADR 0005): quotation (staff and customer link), invoice, credit note, receipt, inspection report with photo thumbnails | done |
+| 3d | Basic reports: jobs by status, invoiced revenue vs payments received vs receivables, explicit date ranges and metric definitions | next |
 
 Rules worth knowing:
 - Invoices can be issued once the job reaches quality inspection (`INVOICEABLE` in `app/services/invoices.py`). Deposits taken earlier are recorded as unallocated payments and applied later.

@@ -10,6 +10,7 @@ import { KIND_LABEL, RESULT_LABEL } from "@/lib/inspection";
 import { formatKm, vehicleTitle } from "@/lib/labels";
 
 import { PrintButton } from "./print-button";
+import { PdfLink } from "@/components/app/pdf-link";
 
 export const metadata: Metadata = { title: "Inspection report" };
 
@@ -35,7 +36,10 @@ async function Report({ params }: { params: PageProps<"/inspections/[id]/print">
     <article className="mx-auto max-w-3xl bg-surface p-6 text-[13px] print:max-w-none print:p-0">
       <div className="mb-4 flex items-start justify-between gap-4 print:hidden">
         <p className="text-sm text-muted">Use your browser&apos;s print dialog to print or save as PDF.</p>
-        <PrintButton />
+        <span className="flex items-center gap-2">
+          <PdfLink href={`/inspections/${id}/pdf`} label="Download PDF" />
+          <PrintButton />
+        </span>
       </div>
       <header className="border-b-2 border-slate-deep pb-3">
         <p className="text-lg font-semibold">{i.organisation_name}</p>

@@ -6,6 +6,7 @@ from app.api.v1 import (
     auth,
     branches,
     customers,
+    documents,
     files,
     health,
     inspections,
@@ -34,3 +35,4 @@ api_router.include_router(files.router)
 api_router.include_router(appointments.router)
 api_router.include_router(quotations.router)
 api_router.include_router(invoices.router)
+api_router.include_router(documents.router)

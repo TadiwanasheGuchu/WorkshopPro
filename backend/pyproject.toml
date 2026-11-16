@@ -17,6 +17,7 @@ dependencies = [
     "boto3>=1.35",
     "pillow>=11",
     "python-multipart>=0.0.18",
+    "reportlab>=4.2",
 ]
 
 [dependency-groups]
@@ -24,6 +25,7 @@ dev = [
     "pytest>=8.3",
     "httpx>=0.28",
     "ruff>=0.8",
+    "pypdf>=5",
 ]
 
 [tool.uv]

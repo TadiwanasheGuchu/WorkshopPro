@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { PdfLink } from "@/components/app/pdf-link";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { DetailList, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
@@ -43,7 +44,12 @@ async function Content({ params }: { params: PageProps<"/payments/[id]">["params
         title={`${PAYMENT_KIND[p.kind]} ${p.receipt_number}`}
         description={p.customer.name}
         back={{ href: "/payments", label: "Payments" }}
-        actions={reversed ? <StatusBadge tone="danger">Reversed</StatusBadge> : null}
+        actions={
+          <span className="flex items-center gap-2">
+            {reversed ? <StatusBadge tone="danger">Reversed</StatusBadge> : null}
+            <PdfLink href={`/payments/${p.id}/pdf`} />
+          </span>
+        }
       />
       {reversed ? (
         <Alert tone="error" className="mb-4">

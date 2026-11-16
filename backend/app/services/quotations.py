@@ -772,3 +772,39 @@ def public_decide(db: Session, token: str, body: PublicDecision) -> PublicQuotat
     )
     db.commit()
     return _public(db, link, v)
+
+
+# --------------------------------------------------------------------------- documents
+
+
+def version_for_token(db: Session, token: str) -> QuotationVersion:
+    """The version a customer link points at, validated like viewing (no view recorded)."""
+    return _link(db, token)[1]
+
+
+def read_for_document(db: Session, v: QuotationVersion) -> QuotationRead:
+    """A read model of one specific version, for the customer's PDF. Carries no staff
+    capabilities or version history."""
+    q = db.get_one(Quotation, v.quotation_id)
+    job = db.get_one(JobCard, q.job_card_id)
+    today = _today(db, q.organisation_id)
+    return QuotationRead(
+        id=q.id,
+        quote_number=q.quote_number,
+        branch=Ref(
+            id=q.branch_id,
+            name=db.scalar(select(Branch.name).where(Branch.id == q.branch_id)) or "",
+        ),
+        job_card=Ref(id=job.id, name=job.job_number),
+        customer=Ref(
+            id=q.customer_id,
+            name=db.scalar(select(Customer.display_name).where(Customer.id == q.customer_id)) or "",
+        ),
+        customer_email=None,
+        vehicle=_vehicle_ref(db.get_one(Vehicle, job.vehicle_id)),
+        current=_version_read(db, v, today),
+        versions=[],
+        capabilities=QuotationCapabilities(
+            edit=False, send=False, revise=False, record_decision=False
+        ),
+    )

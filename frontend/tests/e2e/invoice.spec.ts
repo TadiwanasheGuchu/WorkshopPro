@@ -86,6 +86,12 @@ test("invoice: issue from approved quotation, part payment, retry-safe, then pai
   await expect(page.getByText("Paid", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Record payment" })).toHaveCount(0);
 
+  // The invoice PDF opens from the page and reflects the payments.
+  const pdfHref = await page.getByRole("link", { name: "PDF", exact: true }).getAttribute("href");
+  const pdf = await page.request.get(pdfHref ?? "");
+  expect(pdf.headers()["content-type"]).toBe("application/pdf");
+  expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
+
   // Exactly two receipts on the invoice, and the customer owes nothing.
   await expect(page.getByRole("link", { name: /RCT-\d+/ })).toHaveCount(2);
   await page.goto(`/customers/${customer.id}`);
