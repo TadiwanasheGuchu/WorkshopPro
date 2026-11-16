@@ -12,8 +12,6 @@ Rules:
   allocated to an invoice later.
 """
 
-import hashlib
-import json
 import uuid
 from collections import defaultdict
 from decimal import Decimal
@@ -23,7 +21,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.errors import AppError, ConflictError, NotFoundError
+from app.core.errors import ConflictError, NotFoundError
 from app.core.time import utcnow
 from app.models import Branch, Customer, Invoice, Payment, PaymentAllocation, User
 from app.permissions.catalogue import P
@@ -41,18 +39,9 @@ from app.schemas.invoice import (
 )
 from app.schemas.job_card import Ref
 from app.services import audit, numbering
+from app.services.idempotency import check_replay, fingerprint
 from app.services.invoices import ZERO, balance_due, org_settings, today, visible_branches
 from app.services.invoices import _list_item as invoice_list_item
-
-
-class IdempotencyConflictError(AppError):
-    status_code = 409
-    code = "idempotency_key_reused"
-
-
-def fingerprint(payload: dict[str, Any]) -> str:
-    canonical = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def _by_key(db: Session, organisation_id: uuid.UUID, key: str) -> Payment | None:
@@ -64,10 +53,7 @@ def _by_key(db: Session, organisation_id: uuid.UUID, key: str) -> Payment | None
 
 
 def _replay(existing: Payment, print_: str) -> Payment:
-    if existing.request_fingerprint != print_:
-        raise IdempotencyConflictError(
-            "This Idempotency-Key was already used for a different request."
-        )
+    check_replay(existing.request_fingerprint, print_)
     return existing
 
 

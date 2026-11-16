@@ -754,3 +754,94 @@ export interface OperationsReport {
   mechanics: { user_id: UUID; name: string; open_jobs: number; completed_in_period: number }[];
   definitions: { term: string; definition: string }[];
 }
+
+// --------------------------------------------------------------------------- inventory
+
+export type PartUnit = "each" | "pair" | "set" | "box" | "litre" | "kg" | "metre";
+export type MovementKind = "opening" | "adjustment" | "transfer_out" | "transfer_in" | "receipt" | "issue" | "return" | "supplier_return";
+
+export interface PartCategory {
+  id: UUID;
+  name: string;
+  archived_at: string | null;
+  part_count: number;
+}
+
+export interface StockSummary {
+  on_hand: string;
+  reserved: string;
+  available: string;
+  low_locations: number;
+}
+
+export interface PartListItem {
+  id: UUID;
+  sku: string;
+  name: string;
+  category: Ref | null;
+  unit: PartUnit;
+  manufacturer_part_number: string | null;
+  selling_price: string;
+  cost_price: string | null;
+  archived_at: string | null;
+  stock: StockSummary;
+}
+
+export interface StockLevelRow {
+  location: Ref;
+  branch: Ref;
+  on_hand: string;
+  reserved: string;
+  available: string;
+  min_quantity: string | null;
+  is_low: boolean;
+  can_adjust: boolean;
+  can_transfer: boolean;
+}
+
+export interface Part extends PartListItem {
+  description: string | null;
+  manufacturer: string | null;
+  tax_rate: Ref | null;
+  created_at: string;
+  updated_at: string;
+  levels: StockLevelRow[];
+  capabilities: { edit: boolean; archive: boolean };
+}
+
+export interface StockLocation {
+  id: UUID;
+  name: string;
+  branch: Ref;
+  is_default: boolean;
+  archived_at: string | null;
+  part_count: number;
+  units_on_hand: string;
+}
+
+export interface StockMovement {
+  id: UUID;
+  operation_id: UUID;
+  kind: MovementKind;
+  part: Ref;
+  sku: string;
+  location: Ref;
+  branch: Ref;
+  quantity: string;
+  balance_after: string | null;
+  unit_cost: string | null;
+  job_card: Ref | null;
+  reason: string | null;
+  reference: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface StockOperation {
+  id: UUID;
+  kind: string;
+  reason: string | null;
+  created_at: string;
+  movements: StockMovement[];
+  unchanged_part_ids: UUID[];
+}

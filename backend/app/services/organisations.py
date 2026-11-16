@@ -170,8 +170,13 @@ def update_settings(
 
 
 def list_tax_rates(db: Session, principal: Principal) -> list[TaxRate]:
-    # People preparing quotations need to pick a rate; editing rates still needs settings.manage.
-    if not (principal.can(P.SETTINGS_VIEW) or principal.can_in_any_branch(P.QUOTATIONS_MANAGE)):
+    # People preparing quotations or pricing parts need to pick a rate; editing rates still
+    # needs settings.manage.
+    if not (
+        principal.can(P.SETTINGS_VIEW)
+        or principal.can_in_any_branch(P.QUOTATIONS_MANAGE)
+        or principal.can(P.INVENTORY_CATALOGUE)
+    ):
         raise PermissionDeniedError("You do not have permission to view tax rates.")
     return list(
         db.scalars(

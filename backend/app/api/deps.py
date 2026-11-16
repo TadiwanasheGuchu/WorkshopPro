@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 from redis import Redis
 from sqlalchemy.orm import Session
 
@@ -48,3 +48,18 @@ CurrentPrincipal = Annotated[Principal, Depends(get_principal)]
 
 def client_ip(request: Request) -> str | None:
     return valid_ip(request.client.host if request.client else None)
+
+
+IdempotencyKey = Annotated[
+    str,
+    Header(
+        alias="Idempotency-Key",
+        min_length=8,
+        max_length=100,
+        pattern=r"^[A-Za-z0-9_\-:.]+$",
+        description=(
+            "Unique per intended operation (e.g. a UUID generated when the form opens). "
+            "Retrying with the same key and body returns the original record."
+        ),
+    ),
+]

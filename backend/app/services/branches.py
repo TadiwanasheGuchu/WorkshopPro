@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ConflictError, PermissionDeniedError
 from app.core.time import utcnow
-from app.models import Branch, BranchOperatingHours, ServiceBay
+from app.models import Branch, BranchOperatingHours, ServiceBay, StockLocation
 from app.permissions.catalogue import P
 from app.permissions.principal import Principal
 from app.schemas.branch import (
@@ -45,6 +45,11 @@ def create_branch_record(
     except IntegrityError as exc:
         db.rollback()
         raise ConflictError(f"Branch code {code} is already in use.") from exc
+    db.add(
+        StockLocation(
+            organisation_id=organisation_id, branch_id=branch.id, name="Main store", is_default=True
+        )
+    )
     for weekday, hours in _DEFAULT_HOURS.items():
         db.add(
             BranchOperatingHours(

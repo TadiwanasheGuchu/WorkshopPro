@@ -10,6 +10,7 @@ from app.api.v1 import (
     files,
     health,
     inspections,
+    inventory,
     invoices,
     job_cards,
     organisation,
@@ -38,3 +39,4 @@ api_router.include_router(quotations.router)
 api_router.include_router(invoices.router)
 api_router.include_router(documents.router)
 api_router.include_router(reports.router)
+api_router.include_router(inventory.router)

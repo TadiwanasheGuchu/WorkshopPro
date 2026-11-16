@@ -49,3 +49,11 @@ Enables the `citext` and `pg_trgm` extensions. No tables yet.
 | `user_sessions` | Server-side sessions; token stored as SHA-256 hash |
 | `user_tokens` | Single-use invitation and password-reset tokens (hashed) |
 | `audit_logs` | Append-only; a trigger rejects UPDATE and DELETE |
+
+## Stock ledger
+
+- `stock_movements` is append-only (trigger `stock_movements_append_only`). Quantity is signed; `balance_after` is filled by the trigger.
+- `stock_levels.on_hand` is a running balance written only by `stock_movement_apply` (BEFORE INSERT on movements). It updates the existing row first and inserts only when none exists, because `INSERT ... ON CONFLICT` checks constraints against the proposed new row (a negative quantity) before resolving the conflict.
+- `stock_levels_protect_on_hand` rejects any other change to `on_hand` (checked through the transaction-local setting `workshoppro.stock_ledger`). `reserved` and `min_quantity` are ordinary columns maintained by the application under row locks.
+- Check constraints: `on_hand >= 0`, `reserved >= 0`, `reserved <= on_hand`.
+- Reconciliation: `on_hand` must equal `SUM(quantity)` of movements per part and location; the tests assert this after every scenario.

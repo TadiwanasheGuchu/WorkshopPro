@@ -32,6 +32,14 @@ from app.models.inspection import (
     InspectionTemplateItem,
     StoredFile,
 )
+from app.models.inventory import (
+    Part,
+    PartCategory,
+    StockLevel,
+    StockLocation,
+    StockMovement,
+    StockOperation,
+)
 from app.models.invoice import (
     CreditNote,
     CreditNoteItem,
@@ -89,6 +97,8 @@ __all__ = [
     "JobStatusHistory",
     "Organisation",
     "OrganisationSettings",
+    "Part",
+    "PartCategory",
     "Payment",
     "PaymentAllocation",
     "Quotation",
@@ -99,6 +109,10 @@ __all__ = [
     "Role",
     "RolePermission",
     "ServiceBay",
+    "StockLevel",
+    "StockLocation",
+    "StockMovement",
+    "StockOperation",
     "StoredFile",
     "TaxRate",
     "User",

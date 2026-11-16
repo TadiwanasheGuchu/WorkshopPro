@@ -61,6 +61,11 @@ class P(StrEnum):
     PAYMENTS_REFUND = "payments.refund"
     REPORTS_OPERATIONAL = "reports.operational"
     REPORTS_FINANCIAL = "reports.financial"
+    INVENTORY_VIEW = "inventory.view"
+    INVENTORY_CATALOGUE = "inventory.catalogue"
+    INVENTORY_ADJUST = "inventory.adjust"
+    INVENTORY_TRANSFER = "inventory.transfer"
+    INVENTORY_ISSUE = "inventory.issue"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -303,6 +308,42 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "Invoiced revenue, credits, payments received, refunds and receivables.",
         Scope.BRANCH,
     ),
+    PermissionDef(
+        P.INVENTORY_VIEW,
+        "Inventory",
+        "View parts and stock",
+        "See the parts catalogue, stock levels and stock movements for the branch.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INVENTORY_CATALOGUE,
+        "Inventory",
+        "Manage the parts catalogue",
+        "Create and edit parts, categories, cost and selling prices for the organisation.",
+        Scope.ORGANISATION,
+    ),
+    PermissionDef(
+        P.INVENTORY_ADJUST,
+        "Inventory",
+        "Adjust stock",
+        "Load opening stock, record stocktake corrections with a reason, set minimum levels "
+        "and manage stock locations.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INVENTORY_TRANSFER,
+        "Inventory",
+        "Transfer stock",
+        "Move stock between locations; needed in both the sending and receiving branch.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.INVENTORY_ISSUE,
+        "Inventory",
+        "Reserve and issue parts to jobs",
+        "Reserve stock for authorised jobs, issue parts that are fitted, and take returns.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -364,6 +405,9 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.PAYMENTS_REFUND,
                 P.REPORTS_OPERATIONAL,
                 P.REPORTS_FINANCIAL,
+                P.INVENTORY_VIEW,
+                P.INVENTORY_TRANSFER,
+                P.INVENTORY_ISSUE,
             }
         ),
     ),
@@ -390,6 +434,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INVOICES_VIEW,
                 P.INVOICES_MANAGE,
                 P.PAYMENTS_RECORD,
+                P.INVENTORY_VIEW,
             }
         ),
     ),
@@ -405,6 +450,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.JOB_CARDS_WORK,
                 P.INSPECTIONS_PERFORM,
                 P.APPOINTMENTS_VIEW,
+                P.INVENTORY_VIEW,
             }
         ),
     ),
@@ -412,7 +458,17 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
         "inventory_manager",
         "Inventory manager",
         "Manages parts, stock, suppliers and purchasing.",
-        frozenset({P.BRANCHES_VIEW}),
+        frozenset(
+            {
+                P.BRANCHES_VIEW,
+                P.JOB_CARDS_VIEW,
+                P.INVENTORY_VIEW,
+                P.INVENTORY_CATALOGUE,
+                P.INVENTORY_ADJUST,
+                P.INVENTORY_TRANSFER,
+                P.INVENTORY_ISSUE,
+            }
+        ),
     ),
     RoleTemplate(
         "accounts",
@@ -431,6 +487,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.PAYMENTS_RECORD,
                 P.PAYMENTS_REFUND,
                 P.REPORTS_FINANCIAL,
+                P.INVENTORY_VIEW,
             }
         ),
     ),

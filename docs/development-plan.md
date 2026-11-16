@@ -93,9 +93,21 @@ Rules worth knowing:
 - Balance due = total − credited − paid. A negative balance is an overpayment and can only be paid back as a refund against that invoice.
 - A partial credit note is recorded without tax; to reverse taxed lines, credit the whole invoice and issue a corrected one. Refunding unapplied credit that is not on an invoice is not supported yet (reverse the payment instead if it was recorded in error).
 
-## Phase 4 — Inventory and procurement — `next`
+## Phase 4 — Inventory and procurement — `in progress`
 
-Parts catalogue, stock locations, stock movement ledger as source of truth, concurrency-safe reservations/issues/returns/transfers, suppliers, purchase orders, partial goods received notes, low-stock and valuation reports.
+| # | Deliverable | Status |
+|---|---|---|
+| 4a | Parts catalogue (categories, units, cost and selling price, tax), stock locations per branch (default store created with every branch), append-only stock movement ledger maintained by database trigger, opening stock and stocktake adjustments with mandatory reason, transfers of available stock, minimum levels and low-stock filter, movement ledger screen. Every stock-changing request needs an Idempotency-Key. | done |
+| 4b | Reserve stock for authorised jobs, issue parts that are fitted, returns from jobs; parts used shown on the job card | next |
+| 4c | Suppliers, supplier part references, purchase orders with approval, goods received notes with partial deliveries, supplier returns | planned |
+| 4d | Stock valuation, ledger reconciliation and purchasing reports | planned |
+
+Rules worth knowing:
+- `stock_movements` is the source of truth. `stock_levels.on_hand` changes only through the movement trigger (`stock_movement_apply`); direct updates, deletes and edits to movements are rejected by the database.
+- Stock cannot go below zero, or below what is reserved for jobs. Transfers move only available (unreserved) stock.
+- Operations lock the affected stock-level rows in a fixed order, so concurrent requests cannot oversell (`test_concurrent_removals_cannot_oversell`).
+- The parts catalogue is organisation-wide: managing it (`inventory.catalogue`) needs an organisation-wide role. Stock is per branch.
+- Cost prices are shown only to users who manage the catalogue or adjust stock.
 
 ## Phase 5 — Customer experience and communications — `planned`
 
