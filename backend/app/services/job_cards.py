@@ -791,9 +791,7 @@ def transition(
 # --------------------------------------------------------------------------- assignments
 
 
-def _workers_for_branch(
-    db: Session, organisation_id: uuid.UUID, branch_id: uuid.UUID
-) -> list[User]:
+def workers_for_branch(db: Session, organisation_id: uuid.UUID, branch_id: uuid.UUID) -> list[User]:
     users = db.scalars(
         select(User)
         .where(
@@ -809,7 +807,7 @@ def _workers_for_branch(
 def assignable_users(db: Session, principal: Principal, job_id: uuid.UUID) -> list[AssignableUser]:
     job = get_visible_job_card(db, principal, job_id)
     principal.require(P.JOB_CARDS_ASSIGN, job.branch_id)
-    workers = _workers_for_branch(db, principal.organisation_id, job.branch_id)
+    workers = workers_for_branch(db, principal.organisation_id, job.branch_id)
     loads = (
         dict(
             db.execute(

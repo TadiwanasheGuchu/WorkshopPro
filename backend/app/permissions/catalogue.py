@@ -49,6 +49,8 @@ class P(StrEnum):
     INSPECTIONS_PERFORM = "inspections.perform"
     INSPECTIONS_AMEND = "inspections.amend"
     INSPECTION_TEMPLATES_MANAGE = "inspection_templates.manage"
+    APPOINTMENTS_VIEW = "appointments.view"
+    APPOINTMENTS_MANAGE = "appointments.manage"
 
 
 PERMISSIONS: tuple[PermissionDef, ...] = (
@@ -206,6 +208,20 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         "Create and edit the checklists used for inspections.",
         Scope.ORGANISATION,
     ),
+    PermissionDef(
+        P.APPOINTMENTS_VIEW,
+        "Appointments",
+        "View appointments",
+        "View the branch booking calendar.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.APPOINTMENTS_MANAGE,
+        "Appointments",
+        "Manage appointments",
+        "Book, reschedule, cancel and check in appointments.",
+        Scope.BRANCH,
+    ),
 )
 
 PERMISSIONS_BY_CODE: dict[str, PermissionDef] = {p.code: p for p in PERMISSIONS}
@@ -255,6 +271,8 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.JOB_CARDS_AUTHORISE_EXCEPTION,
                 P.INSPECTIONS_PERFORM,
                 P.INSPECTIONS_AMEND,
+                P.APPOINTMENTS_VIEW,
+                P.APPOINTMENTS_MANAGE,
             }
         ),
     ),
@@ -273,6 +291,8 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.JOB_CARDS_CREATE,
                 P.JOB_CARDS_MANAGE,
                 P.INSPECTIONS_PERFORM,
+                P.APPOINTMENTS_VIEW,
+                P.APPOINTMENTS_MANAGE,
             }
         ),
     ),
@@ -287,6 +307,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.VEHICLES_VIEW,
                 P.JOB_CARDS_WORK,
                 P.INSPECTIONS_PERFORM,
+                P.APPOINTMENTS_VIEW,
             }
         ),
     ),

@@ -41,6 +41,14 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `job_cards.work` | branch | See jobs assigned to you; diagnosis/work notes; workshop status moves |
 | `job_cards.authorise_exception` | branch | Authorise chargeable work without an approved quotation |
 
+| `inspections.perform` | branch | Start inspections, record results/photos, submit (on jobs you can see) |
+| `inspections.amend` | branch | Correct submitted inspections (old value + reason recorded) |
+| `inspection_templates.manage` | organisation | Create and edit inspection checklists |
+| `appointments.view` | branch | View the branch booking calendar |
+| `appointments.manage` | branch | Book, reschedule, cancel, mark no-show, check in |
+
+Viewing an inspection or its photos follows job card visibility: anyone who can see the job can see them.
+
 \* Customers and vehicles are shared by the whole organisation. A grant in **any** branch gives access to all of them (`Principal.require_in_any_branch`), so a branch-limited service advisor can serve a customer who first visited another branch.
 
 ## Job card workflow

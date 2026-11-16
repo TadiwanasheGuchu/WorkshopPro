@@ -474,3 +474,38 @@ export interface InspectionTemplate {
   item_count: number;
   items: { id: UUID; section: string; label: string; guidance: string | null }[] | null;
 }
+
+// --------------------------------------------------------------------------- appointments
+
+export type AppointmentStatus = "booked" | "arrived" | "cancelled" | "no_show";
+
+export interface Appointment {
+  id: UUID;
+  branch: Ref;
+  customer: Ref;
+  vehicle: JobCardSummary["vehicle"] | null;
+  service_bay: Ref | null;
+  assigned_user: Ref | null;
+  starts_at: string;
+  ends_at: string;
+  local_date: string;
+  local_start: string;
+  local_end: string;
+  duration_minutes: number;
+  reason: string;
+  notes: string | null;
+  status: AppointmentStatus;
+  cancellation_reason: string | null;
+  job_card: Ref | null;
+  created_by: string | null;
+}
+
+export interface DaySchedule {
+  date: string;
+  timezone: string;
+  opens_at: string | null;
+  closes_at: string | null;
+  is_closed: boolean;
+  bays: Ref[];
+  appointments: Appointment[];
+}

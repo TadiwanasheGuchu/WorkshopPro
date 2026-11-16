@@ -17,7 +17,8 @@ import { CONTACT_METHOD } from "@/lib/labels";
 
 const contactSchema = z.object({
   kind: z.enum(["phone", "email"]),
-  value: z.string().trim().min(1, "Enter a value or remove this row."),
+  // Empty rows are allowed and dropped on submit (the form starts with one blank phone row).
+  value: z.string().trim(),
   label: z.string().max(50),
   is_primary: z.boolean(),
 });

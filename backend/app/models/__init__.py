@@ -4,6 +4,7 @@ Import every model module here so Alembic autogenerate sees all tables.
 """
 
 from app.db.base import Base
+from app.models.appointment import Appointment
 from app.models.audit import AuditLog
 from app.models.branch import Branch, BranchOperatingHours, ServiceBay
 from app.models.customer import (
@@ -46,6 +47,7 @@ from app.models.organisation import (
 )
 
 __all__ = [
+    "Appointment",
     "AuditLog",
     "Base",
     "Branch",

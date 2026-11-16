@@ -54,24 +54,30 @@ Deferred:
 
 ---
 
-## Phase 2 — Core workshop operations — `next`
+## Phase 2 — Core workshop operations — `done`
 
-First end-to-end business flow: **Customer → Vehicle → Inspection → Job Card → Mechanic Assignment**.
+| # | Deliverable | Status |
+|---|---|---|
+| 2.1 | Customers: individual/company, multiple phones/emails, address, append-only communication consent with evidence | done |
+| 2.2 | Vehicles: registration/VIN normalisation (older short chassis numbers allowed), unique per organisation, ownership history and transfer, odometer cannot drop without a reason | done |
+| 2.3 | Object storage (S3 adaptor; SeaweedFS in Compose), validated uploads (decode check, size limit, EXIF/GPS stripped, resized, thumbnails), permission-checked downloads | done |
+| 2.4 | Job cards: organisation-scoped numbers, explicit transition table, status history, optimistic versioning, approval rule with documented, revocable exceptions | done |
+| 2.5 | Mechanic assignment (branch eligibility checked); mechanics see only assigned jobs and make workshop moves only | done |
+| 2.6 | Inspection templates (default checklist seeded), mobile checklist with autosave and camera photos, submit rules, locked after submission, audited amendments, printable customer report | done |
+| 2.7 | Appointments: per branch/bay/mechanic in organisation time zone, double-booking rejected, day view, check-in opens a job card | done |
+| 2.8 | Playwright E2E for customer → vehicle → receive → inspect → assign, and booking → check-in, on desktop and phone | done |
 
-| # | Deliverable |
-|---|---|
-| 2.1 | Customers (individual/company, contacts, addresses, communication consent) |
-| 2.2 | Vehicles (registration/VIN validation, ownership history, existing damage notes) |
-| 2.3 | Object storage (MinIO locally, S3-compatible in production), validated uploads, image resizing, signed URLs |
-| 2.4 | Job cards: org-scoped numbering (`JC-000123`), intake details, explicit state machine, status history, priority, due dates |
-| 2.5 | Mechanic assignment and "my jobs" mobile view |
-| 2.6 | Inspection templates (seeded default template from §3.5), mobile inspection execution with photos, draft/submit, immutable submitted record |
-| 2.7 | Basic appointments and a branch/bay/mechanic day calendar |
-| 2.8 | Playwright E2E for the full flow on phone and desktop viewports |
+**Exit:** met. Staff can register a customer and vehicle, receive the vehicle, inspect it, open a job card and assign a mechanic (`frontend/tests/e2e/workshop-flow.spec.ts`).
+
+Deferred:
+- Inspection PDF generation (Phase 3 brings server-side PDFs; a printable report exists now).
+- Vehicle photos outside inspections; job card attachments.
+- Mechanic leave/availability and a week view (manual day scheduling only, per CLAUDE.md §3.12).
+- Upcoming appointments on the customer page (API exists: `GET /appointments/upcoming`).
 
 ---
 
-## Phase 3 — Commercial workflow — `planned`
+## Phase 3 — Commercial workflow — `next`
 
 Quotations with versioning, approvals bound to exact version and total, documented approval exceptions, Celery + PDF generation, invoices (immutable once issued), credit notes, payments with idempotency keys and allocations, receipts, basic operational and financial reports.
 

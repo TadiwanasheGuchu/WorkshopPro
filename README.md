@@ -4,7 +4,7 @@ Automotive workshop management for garages and service centres in Namibia: custo
 
 Project rules and product specification: [`CLAUDE.md`](CLAUDE.md). Phase plan and progress: [`docs/development-plan.md`](docs/development-plan.md).
 
-**Current state:** Phase 1 (identity and organisation foundation) complete: sign-in, password reset, user invitations, roles and branch-scoped permissions, branches with hours and service bays, organisation settings, tax rates, document numbering and the audit log. Workshop operations (customers, vehicles, inspections, job cards) are next.
+**Current state:** Phases 0–2 complete. Sign-in and permissions; organisation, branches and settings; customers and vehicles; job cards with an enforced workflow and approval rule; mechanic assignment; mobile inspections with photos; appointments. Quotations, invoices and payments (Phase 3) are next.
 
 ## Stack
 
@@ -13,7 +13,7 @@ Project rules and product specification: [`CLAUDE.md`](CLAUDE.md). Phase plan an
 | Frontend | Next.js 16 (App Router), TypeScript strict, Tailwind CSS 4, Radix UI, React Hook Form, Zod |
 | Backend | Python 3.12+, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic |
 | Data | PostgreSQL 16, Redis 7 |
-| Runtime | Docker Compose, nginx edge, Mailpit (local email) |
+| Runtime | Docker Compose, nginx edge, SeaweedFS (S3-compatible photo storage), Mailpit (local email) |
 
 ## Quick start (Docker)
 
@@ -43,7 +43,7 @@ Then sign in at http://localhost:3000 and invite staff from **Users & roles**.
 
 The backend applies database migrations automatically on start (`RUN_MIGRATIONS=false` disables this).
 
-Only nginx (and Mailpit) are published, on `127.0.0.1`. Set `WEB_BIND=0.0.0.0` to serve the local network on an on-premises install. For production, set `ENVIRONMENT=production`, a real `SMTP_*` server, `APP_BASE_URL`, and serve over HTTPS.
+Photos are stored in the bundled SeaweedFS (S3-compatible, not published); set `STORAGE_*` to use a managed S3-compatible service instead. Only nginx (and Mailpit) are published, on `127.0.0.1`. Set `WEB_BIND=0.0.0.0` to serve the local network on an on-premises install. For production, set `ENVIRONMENT=production`, a real `SMTP_*` server, `APP_BASE_URL`, and serve over HTTPS.
 
 ```bash
 docker compose logs -f backend      # follow API logs

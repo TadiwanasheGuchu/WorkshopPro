@@ -23,6 +23,8 @@ export const P = {
   INSPECTIONS_PERFORM: "inspections.perform",
   INSPECTIONS_AMEND: "inspections.amend",
   INSPECTION_TEMPLATES_MANAGE: "inspection_templates.manage",
+  APPOINTMENTS_VIEW: "appointments.view",
+  APPOINTMENTS_MANAGE: "appointments.manage",
 } as const;
 
 export type PermissionCode = (typeof P)[keyof typeof P];

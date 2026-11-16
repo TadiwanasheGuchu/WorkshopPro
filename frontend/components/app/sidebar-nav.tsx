@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Car, ClipboardList, Contact, LayoutDashboard, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
+import { Building2, CalendarDays, Car, ClipboardList, Contact, LayoutDashboard, ScrollText, Settings, Users, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,6 +16,7 @@ const icons: Record<NavIcon, LucideIcon> = {
   customers: Contact,
   vehicles: Car,
   job_cards: ClipboardList,
+  appointments: CalendarDays,
 };
 
 function isActive(pathname: string, href: string, match: string[] = []): boolean {

@@ -1,7 +1,7 @@
 import type { Me } from "./api/types";
 import { P, can, canInAnyBranch } from "./permissions";
 
-export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards";
+export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments";
 
 export interface NavItem {
   href: string;
@@ -43,9 +43,14 @@ export function navigationFor(me: Me): NavGroup[] {
   const groups: NavGroup[] = [
     { label: "Overview", items: [{ href: "/", label: "Dashboard", icon: "dashboard" }] },
   ];
+  const workshop: NavItem[] = [];
   if (canInAnyBranch(me, P.JOB_CARDS_VIEW) || canInAnyBranch(me, P.JOB_CARDS_WORK)) {
-    groups.push({ label: "Workshop", items: [{ href: "/job-cards", label: "Job cards", icon: "job_cards" }] });
+    workshop.push({ href: "/job-cards", label: "Job cards", icon: "job_cards", match: ["/inspections"] });
   }
+  if (canInAnyBranch(me, P.APPOINTMENTS_VIEW)) {
+    workshop.push({ href: "/appointments", label: "Appointments", icon: "appointments" });
+  }
+  if (workshop.length) groups.push({ label: "Workshop", items: workshop });
   if (customers.length) groups.push({ label: "Customers", items: customers });
   if (admin.length) groups.push({ label: "Administration", items: admin });
   return groups;

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    appointments,
     audit,
     auth,
     branches,
@@ -28,3 +29,4 @@ api_router.include_router(vehicles.router)
 api_router.include_router(job_cards.router)
 api_router.include_router(inspections.router)
 api_router.include_router(files.router)
+api_router.include_router(appointments.router)
