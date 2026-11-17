@@ -83,8 +83,11 @@ test("invoice: issue from approved quotation, part payment, retry-safe, then pai
   await expect(dialog.getByLabel("Amount received")).toHaveValue("635.00");
   await dialog.getByRole("button", { name: "Record payment" }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByText("Paid", { exact: true })).toBeVisible();
+  // "Paid" is both the status badge and a row label in the balance panel, so check the
+  // balance itself.
   await expect(page.getByRole("button", { name: "Record payment" })).toHaveCount(0);
+  const balance = page.locator("dl div", { has: page.getByText("Balance due", { exact: true }) });
+  await expect(balance.getByText("N$ 0.00")).toBeVisible();
 
   // The invoice PDF opens from the page and reflects the payments.
   const pdfHref = await page.getByRole("link", { name: "PDF", exact: true }).getAttribute("href");
