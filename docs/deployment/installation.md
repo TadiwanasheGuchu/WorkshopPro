@@ -89,7 +89,7 @@ docker compose exec backend python -m app.cli create-organisation \
 ```
 
 The owner password is prompted for. Then sign in at `https://<SERVER_NAME>` and complete
-**Settings**: organisation details and logo, tax rates (as confirmed by the workshop's
+**Settings**: organisation details, tax rates (as confirmed by the workshop's
 accountant or tax adviser; none are pre-loaded), document numbering, branches, bays,
 users and roles.
 

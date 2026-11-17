@@ -5,7 +5,7 @@ WorkshopPro keeps business data in two places, and a backup must cover both:
 | Data | Where | Backed up by |
 |---|---|---|
 | Customers, vehicles, jobs, quotations, invoices, payments, stock ledger, audit log, settings | PostgreSQL | `pg_dump` (custom format) |
-| Inspection photos, logos and other uploads | Object storage (SeaweedFS in Compose, or a managed S3 service) | `python -m app.cli storage-export` through the S3 API |
+| Inspection photos and other uploads | Object storage (SeaweedFS in Compose, or a managed S3 service) | `python -m app.cli storage-export` through the S3 API |
 
 Redis is **not** backed up. It holds the background job queue, rate-limit counters and cache. After a restore, notifications that were waiting in the queue are picked up again by the `requeue_stale` sweep (every 5 minutes), because their state lives in PostgreSQL.
 

@@ -137,7 +137,7 @@ Rules worth knowing:
 | 6.5 | Backups: snapshot-consistent `pg_dump` + object storage export with manifest and checksums, retention; restore with verification (row counts, stock ledger, reservations, invoice balances, stored files); restore drill into a throwaway Compose project — run and passed (`docs/deployment/backups.md`) | done |
 | 6.6 | Production Compose override: HTTPS edge (TLS 1.2/1.3, HTTP/2, HSTS, HTTP→HTTPS), Let's Encrypt renewal or customer certificates, database/Redis unpublished, no Mailpit; health checks on every service; log rotation; `monitoring/check.sh` with change-only alerts; `deploy/upgrade.sh` and `rollback.sh` (migration downgrade or backup restore); installation, upgrade and monitoring runbooks — all exercised on a production-mode stack | done |
 | 6.7 | Performance review on ~3 years of seeded data (30k jobs, 24k invoices, 360k audit entries): all screen calls 10–130 ms, 10 concurrent users p95 308 ms; job search, invoice list and payment list fixed; migration 0017 (`docs/architecture/performance.md`) | done |
-| 6.8 | Staff user guide and onboarding | next |
+| 6.8 | Staff user guide by role and a two-week pilot onboarding plan (`docs/user-guide/`), checked against the screens' actual labels and rules | done |
 | 6.9 | Pilot workshop: server and domain, real SMTP, approved WhatsApp templates, tax settings confirmed with an adviser | needs owner input |
 
 Release checklist (repeat before every release):
@@ -147,3 +147,9 @@ cd backend && uv run --with pip-audit pip-audit --strict
 cd frontend && npm audit --omit=dev
 cd backend && uv run pytest -q   # includes tests/test_security_sweep.py
 ```
+
+Gaps found while writing the guide (for the pilot backlog):
+- Deposits before an invoice exists: supported by the API, no screen yet.
+- Organisation logo upload on documents (deferred since Phase 1).
+- Supplier balances owed (supplier invoice references are recorded on deliveries; payment of suppliers stays in the accounting system).
+
