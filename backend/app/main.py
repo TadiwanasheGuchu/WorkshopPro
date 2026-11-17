@@ -12,6 +12,8 @@ from app.core.middleware import RequestContextMiddleware
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
+    if settings.is_production and (problems := settings.production_problems()):
+        raise RuntimeError("Unsafe production configuration:\n- " + "\n- ".join(problems))
 
     app = FastAPI(
         title="WorkshopPro API",
