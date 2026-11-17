@@ -324,32 +324,27 @@ def list_job_cards(
     if search:
         term = search.strip()
         key = registration_key(term)
-        conditions.append(
-            or_(
-                JobCard.job_number.ilike(f"%{term}%"),
-                exists(
-                    select(Customer.id).where(
-                        Customer.id == JobCard.customer_id,
-                        Customer.display_name.ilike(f"%{term}%"),
+        org = principal.organisation_id
+        # IN (subquery) rather than correlated EXISTS: matching customers/vehicles are
+        # found once (trigram indexes), not probed for every job card.
+        matches = [
+            JobCard.job_number.ilike(f"%{term}%"),
+            JobCard.customer_id.in_(
+                select(Customer.id).where(
+                    Customer.organisation_id == org, Customer.display_name.ilike(f"%{term}%")
+                )
+            ),
+        ]
+        if key:
+            matches.append(
+                JobCard.vehicle_id.in_(
+                    select(Vehicle.id).where(
+                        Vehicle.organisation_id == org,
+                        or_(Vehicle.registration_key.contains(key), Vehicle.vin.contains(key)),
                     )
-                ),
-                *(
-                    [
-                        exists(
-                            select(Vehicle.id).where(
-                                Vehicle.id == JobCard.vehicle_id,
-                                or_(
-                                    Vehicle.registration_key.contains(key),
-                                    Vehicle.vin.contains(key),
-                                ),
-                            )
-                        )
-                    ]
-                    if key
-                    else []
-                ),
+                )
             )
-        )
+        conditions.append(or_(*matches))
 
     total = db.scalar(select(func.count()).select_from(JobCard).where(*conditions)) or 0
     jobs = list(

@@ -388,6 +388,13 @@ def test_reversal_undoes_allocations_once(
         ).status_code
         == 409
     )
+    # The list (batched read models) shows exactly what the detail view shows.
+    _pay(owner_api, org, job["customer_id"], "300.00", [(inv["id"], "200.00")])
+    listed = owner_api.get("/payments").json()["items"]
+    assert len(listed) == 3
+    for item in listed:
+        assert item == owner_api.get(f"/payments/{item['id']}").json()
+    assert {i["unallocated"] for i in listed} == {"0.00", "100.00"}
 
 
 # --------------------------------------------------------------------------- credit notes

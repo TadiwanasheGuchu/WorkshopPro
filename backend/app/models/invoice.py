@@ -42,7 +42,15 @@ class Invoice(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ),
         CheckConstraint("amount_paid >= 0", name="paid_non_negative"),
         CheckConstraint("amount_credited >= 0 AND amount_credited <= total", name="credited_range"),
-        Index("ix_invoices_org_status", "organisation_id", "status", "issue_date"),
+        # Matches the invoice list order (status, newest first) and serves date-range
+        # reports on issued invoices.
+        Index(
+            "ix_invoices_list",
+            "organisation_id",
+            "status",
+            text("issue_date DESC NULLS FIRST"),
+            "created_at",
+        ),
         Index("ix_invoices_customer", "customer_id"),
         Index("ix_invoices_job", "job_card_id"),
     )

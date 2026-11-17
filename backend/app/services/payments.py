@@ -78,43 +78,95 @@ def _unallocated(db: Session, p: Payment) -> Decimal:
 
 
 def read(db: Session, p: Payment) -> PaymentRead:
-    rows = db.execute(
-        select(PaymentAllocation.invoice_id, Invoice.invoice_number, PaymentAllocation.amount)
+    return read_many(db, [p])[0]
+
+
+def read_many(db: Session, payments: list[Payment]) -> list[PaymentRead]:
+    """Read models for several payments with a fixed number of queries (list pages)."""
+    if not payments:
+        return []
+    ids = [p.id for p in payments]
+    allocations: dict[uuid.UUID, list[AllocationRead]] = defaultdict(list)
+    allocated: dict[uuid.UUID, Decimal] = defaultdict(lambda: ZERO)
+    for pid, inv_id, number, amount in db.execute(
+        select(
+            PaymentAllocation.payment_id,
+            PaymentAllocation.invoice_id,
+            Invoice.invoice_number,
+            PaymentAllocation.amount,
+        )
         .join(Invoice, Invoice.id == PaymentAllocation.invoice_id)
-        .where(PaymentAllocation.payment_id == p.id)
+        .where(PaymentAllocation.payment_id.in_(ids))
         .order_by(PaymentAllocation.created_at)
-    ).all()
-    reversed_by = db.scalar(
-        select(Payment.receipt_number).where(Payment.reverses_payment_id == p.id)
+    ):
+        allocations[pid].append(
+            AllocationRead(invoice_id=inv_id, invoice_number=number, amount=amount)
+        )
+        allocated[pid] += amount
+    reversed_by = dict(
+        db.execute(
+            select(Payment.reverses_payment_id, Payment.receipt_number).where(
+                Payment.reverses_payment_id.in_(ids)
+            )
+        ).all()
     )
-    reverses = (
-        db.scalar(select(Payment.receipt_number).where(Payment.id == p.reverses_payment_id))
-        if p.reverses_payment_id
-        else None
+    targets = {p.reverses_payment_id for p in payments if p.reverses_payment_id}
+    receipts = (
+        dict(
+            db.execute(
+                select(Payment.id, Payment.receipt_number).where(Payment.id.in_(targets))
+            ).all()
+        )
+        if targets
+        else {}
     )
-    return PaymentRead(
-        id=p.id,
-        receipt_number=p.receipt_number,
-        kind=p.kind,  # type: ignore[arg-type]
-        method=p.method,  # type: ignore[arg-type]
-        amount=p.amount,
-        currency_code=p.currency_code,
-        received_at=p.received_at,
-        reference=p.reference,
-        notes=p.notes,
-        branch=Ref(
-            id=p.branch_id, name=db.scalar(select(Branch.name).where(Branch.id == p.branch_id))
-        ),
-        customer=Ref(
-            id=p.customer_id,
-            name=db.scalar(select(Customer.display_name).where(Customer.id == p.customer_id)),
-        ),
-        recorded_by=db.scalar(select(User.full_name).where(User.id == p.recorded_by_user_id)) or "",
-        allocations=[AllocationRead(invoice_id=i, invoice_number=n, amount=a) for i, n, a in rows],
-        unallocated=_unallocated(db, p),
-        reversed_by_receipt=reversed_by,
-        reverses_receipt=reverses,
+    branches = dict(
+        db.execute(
+            select(Branch.id, Branch.name).where(Branch.id.in_({p.branch_id for p in payments}))
+        ).all()
     )
+    customers = dict(
+        db.execute(
+            select(Customer.id, Customer.display_name).where(
+                Customer.id.in_({p.customer_id for p in payments})
+            )
+        ).all()
+    )
+    users = dict(
+        db.execute(
+            select(User.id, User.full_name).where(
+                User.id.in_({p.recorded_by_user_id for p in payments})
+            )
+        ).all()
+    )
+
+    def unallocated(p: Payment) -> Decimal:
+        # Customer credit still available on this payment.
+        if p.kind != "payment" or p.id in reversed_by:
+            return ZERO
+        return p.amount - allocated[p.id]
+
+    return [
+        PaymentRead(
+            id=p.id,
+            receipt_number=p.receipt_number,
+            kind=p.kind,  # type: ignore[arg-type]
+            method=p.method,  # type: ignore[arg-type]
+            amount=p.amount,
+            currency_code=p.currency_code,
+            received_at=p.received_at,
+            reference=p.reference,
+            notes=p.notes,
+            branch=Ref(id=p.branch_id, name=branches.get(p.branch_id)),
+            customer=Ref(id=p.customer_id, name=customers.get(p.customer_id)),
+            recorded_by=users.get(p.recorded_by_user_id) or "",
+            allocations=allocations[p.id],
+            unallocated=unallocated(p),
+            reversed_by_receipt=reversed_by.get(p.id),
+            reverses_receipt=receipts.get(p.reverses_payment_id) if p.reverses_payment_id else None,
+        )
+        for p in payments
+    ]
 
 
 def _load(
@@ -167,7 +219,7 @@ def list_payments(
         .limit(params.page_size)
         .offset(params.offset)
     )
-    return [read(db, p) for p in rows], total
+    return read_many(db, list(rows)), total
 
 
 def customer_balance(db: Session, principal: Principal, customer_id: uuid.UUID) -> CustomerBalance:
