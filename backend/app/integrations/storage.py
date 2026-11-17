@@ -5,6 +5,7 @@ streamed through the API after a permission check (app/api/v1/files.py).
 """
 
 import logging
+from collections.abc import Iterator
 from functools import lru_cache
 from typing import Protocol
 
@@ -25,6 +26,8 @@ class ObjectStorage(Protocol):
     def put(self, key: str, data: bytes, content_type: str) -> None: ...
     def get(self, key: str) -> bytes: ...
     def delete(self, key: str) -> None: ...
+    def list_keys(self) -> Iterator[str]: ...
+    def content_type(self, key: str) -> str: ...
 
 
 class S3Storage:
@@ -70,6 +73,20 @@ class S3Storage:
         except ClientError as exc:
             raise StorageError("Could not delete the file.") from exc
 
+    def list_keys(self) -> Iterator[str]:
+        """Every object key in the bucket (used by backups)."""
+        pages = self.client.get_paginator("list_objects_v2").paginate(Bucket=self.bucket)
+        for page in pages:
+            for item in page.get("Contents", []):
+                yield item["Key"]
+
+    def content_type(self, key: str) -> str:
+        try:
+            head = self.client.head_object(Bucket=self.bucket, Key=key)
+        except ClientError as exc:
+            raise StorageError("File not available.") from exc
+        return str(head.get("ContentType") or "application/octet-stream")
+
 
 class InMemoryStorage:
     """Used in tests."""
@@ -87,6 +104,14 @@ class InMemoryStorage:
 
     def delete(self, key: str) -> None:
         self.objects.pop(key, None)
+
+    def list_keys(self) -> Iterator[str]:
+        yield from sorted(self.objects)
+
+    def content_type(self, key: str) -> str:
+        if key not in self.objects:
+            raise StorageError("File not available.")
+        return self.objects[key][1]
 
 
 @lru_cache

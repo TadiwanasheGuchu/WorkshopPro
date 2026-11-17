@@ -134,8 +134,8 @@ Rules worth knowing:
 | 6.2 | Production configuration guard: the API refuses to start in production with HTTP base URL, localhost/wildcard CORS, insecure cookies, placeholder secrets, Mailpit/local SMTP, log-only WhatsApp, or rate limits off | done |
 | 6.3 | Content-Security-Policy on app pages in production builds (no violations across staff and portal pages) | done |
 | 6.4 | Dependency scan: `pip-audit` (Python) and `npm audit --omit=dev` (frontend) — no known vulnerabilities on 2026-11-17 | done |
-| 6.5 | Backups (database + object storage) with a tested restore into a fresh environment | next |
-| 6.6 | HTTPS for Compose, monitoring and health checks, deployment/upgrade/rollback runbooks | planned |
+| 6.5 | Backups: snapshot-consistent `pg_dump` + object storage export with manifest and checksums, retention; restore with verification (row counts, stock ledger, reservations, invoice balances, stored files); restore drill into a throwaway Compose project — run and passed (`docs/deployment/backups.md`) | done |
+| 6.6 | HTTPS for Compose, monitoring and health checks, deployment/upgrade/rollback runbooks | next |
 | 6.7 | Query/performance review, staff user guide and onboarding | planned |
 | 6.8 | Pilot workshop: server and domain, real SMTP, approved WhatsApp templates, tax settings confirmed with an adviser | needs owner input |
 

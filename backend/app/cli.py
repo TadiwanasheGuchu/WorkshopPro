@@ -3,6 +3,13 @@
 Usage:
     python -m app.cli create-organisation --name "Acme Motors" \\
         --owner-email owner@example.com --owner-name "Owner Name"
+    python -m app.cli backup-manifest > manifest.json
+    python -m app.cli storage-export > objects.tar
+    python -m app.cli storage-import < objects.tar
+    python -m app.cli verify-restore --manifest - < manifest.json
+
+The backup commands stream through stdin/stdout so they can run inside the backend
+container (`docker compose exec -T backend ...`); see infrastructure/backups/.
 
 The owner's password is prompted for (or read from stdin with --password-stdin) and is
 never accepted as a command-line argument, which would leave it in shell history.
@@ -10,14 +17,17 @@ never accepted as a command-line argument, which would leave it in shell history
 
 import argparse
 import getpass
+import json
 import sys
 
 from pydantic import TypeAdapter, ValidationError
 
 from app.core.errors import AppError
 from app.db.session import get_sessionmaker
+from app.integrations.storage import get_storage
 from app.schemas.branch import BranchCode
 from app.schemas.common import Email, Password
+from app.services import backups
 from app.services.organisations import create_organisation
 
 
@@ -58,6 +68,38 @@ def _create_organisation(args: argparse.Namespace) -> int:
     return 0
 
 
+def _backup_manifest(args: argparse.Namespace) -> int:
+    snapshot = json.load(sys.stdin) if args.snapshot_stdin else None
+    with get_sessionmaker()() as db:
+        print(json.dumps(backups.manifest(db, get_storage(), snapshot), indent=2))
+    return 0
+
+
+def _storage_export(_args: argparse.Namespace) -> int:
+    count = backups.export_objects(get_storage(), sys.stdout.buffer)
+    sys.stdout.buffer.flush()
+    print(f"Exported {count} objects.", file=sys.stderr)
+    return 0
+
+
+def _storage_import(_args: argparse.Namespace) -> int:
+    count = backups.import_objects(get_storage(), sys.stdin.buffer)
+    print(f"Imported {count} objects.", file=sys.stderr)
+    return 0
+
+
+def _verify_restore(args: argparse.Namespace) -> int:
+    expected = None
+    if args.manifest:
+        source = sys.stdin if args.manifest == "-" else open(args.manifest)  # noqa: SIM115
+        with source:
+            expected = json.load(source)
+    with get_sessionmaker()() as db:
+        result = backups.verify(db, get_storage(), expected)
+    print(backups.verification_json(result))
+    return 0 if result.ok else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="WorkshopPro admin")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -72,6 +114,27 @@ def main(argv: list[str] | None = None) -> int:
         "--password-stdin", action="store_true", help="Read the owner password from stdin"
     )
     create.set_defaults(handler=_create_organisation)
+
+    man = sub.add_parser(
+        "backup-manifest", help="Print row counts, schema revision and object count as JSON"
+    )
+    man.add_argument(
+        "--snapshot-stdin",
+        action="store_true",
+        help="Read {alembic_revision, tables} taken in the pg_dump snapshot from stdin",
+    )
+    man.set_defaults(handler=_backup_manifest)
+    sub.add_parser(
+        "storage-export", help="Write every object in storage to stdout as a tar stream"
+    ).set_defaults(handler=_storage_export)
+    sub.add_parser(
+        "storage-import", help="Read a tar stream from stdin into object storage"
+    ).set_defaults(handler=_storage_import)
+    verify = sub.add_parser(
+        "verify-restore", help="Check counts, ledgers, balances and files after a restore"
+    )
+    verify.add_argument("--manifest", help="Backup manifest JSON file, or - for stdin")
+    verify.set_defaults(handler=_verify_restore)
 
     args = parser.parse_args(argv)
     return int(args.handler(args))

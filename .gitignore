@@ -28,3 +28,6 @@ playwright-report/
 .DS_Store
 .idea/
 .vscode/
+
+# Local backups (contain customer data)
+/backups/
