@@ -14,6 +14,14 @@ export COMPOSE_PROJECT_NAME="workshoppro-restore-drill"
 BACKUP="${1:?Usage: restore-drill.sh <backup-dir> [--keep]}"
 export WEB_PORT="${DRILL_WEB_PORT:-3901}" POSTGRES_PORT=55901 REDIS_PORT=56901 MAILPIT_PORT=8901
 
+# The drill must never contact customers. A restored database can hold queued
+# notifications, so: base compose file only (no public ports, Mailpit catches mail),
+# non-production mode, WhatsApp logged only, and no background worker.
+export COMPOSE_FILE=docker-compose.yml ENVIRONMENT=staging APP_BASE_URL="http://localhost:$WEB_PORT" \
+  CORS_ALLOWED_ORIGINS="http://localhost:$WEB_PORT" COOKIE_SECURE=false \
+  SMTP_HOST=mailpit SMTP_PORT=1025 SMTP_USERNAME= SMTP_PASSWORD= SMTP_STARTTLS=false \
+  WHATSAPP_PROVIDER=log RESTORE_START_SERVICES="frontend nginx mailpit"
+
 cleanup() {
   [ "${2:-}" = "--keep" ] && return
   log "Removing drill project"
@@ -23,7 +31,7 @@ cleanup() {
 trap 'cleanup "$@"' EXIT
 
 log "Starting empty drill project on port $WEB_PORT"
-dc up -d --no-build >/dev/null
+dc up -d --no-build postgres redis storage mailpit backend >/dev/null
 wait_healthy backend 240
 
 "$REPO_ROOT/infrastructure/backups/restore.sh" "$BACKUP" --yes
@@ -33,4 +41,5 @@ code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$WEB_PORT/api/v
 [ "$code" = 200 ] || die "restored app is not ready (HTTP $code)"
 code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$WEB_PORT/sign-in")"
 [ "$code" = 200 ] || die "sign-in page did not load (HTTP $code)"
+[ -z "$(dc ps -q worker)" ] || die "worker is running in the drill project"
 log "Restore drill passed for $(basename "$BACKUP")"

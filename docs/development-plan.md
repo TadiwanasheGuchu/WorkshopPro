@@ -135,8 +135,8 @@ Rules worth knowing:
 | 6.3 | Content-Security-Policy on app pages in production builds (no violations across staff and portal pages) | done |
 | 6.4 | Dependency scan: `pip-audit` (Python) and `npm audit --omit=dev` (frontend) — no known vulnerabilities on 2026-11-17 | done |
 | 6.5 | Backups: snapshot-consistent `pg_dump` + object storage export with manifest and checksums, retention; restore with verification (row counts, stock ledger, reservations, invoice balances, stored files); restore drill into a throwaway Compose project — run and passed (`docs/deployment/backups.md`) | done |
-| 6.6 | HTTPS for Compose, monitoring and health checks, deployment/upgrade/rollback runbooks | next |
-| 6.7 | Query/performance review, staff user guide and onboarding | planned |
+| 6.6 | Production Compose override: HTTPS edge (TLS 1.2/1.3, HTTP/2, HSTS, HTTP→HTTPS), Let's Encrypt renewal or customer certificates, database/Redis unpublished, no Mailpit; health checks on every service; log rotation; `monitoring/check.sh` with change-only alerts; `deploy/upgrade.sh` and `rollback.sh` (migration downgrade or backup restore); installation, upgrade and monitoring runbooks — all exercised on a production-mode stack | done |
+| 6.7 | Query/performance review, staff user guide and onboarding | next |
 | 6.8 | Pilot workshop: server and domain, real SMTP, approved WhatsApp templates, tax settings confirmed with an adviser | needs owner input |
 
 Release checklist (repeat before every release):

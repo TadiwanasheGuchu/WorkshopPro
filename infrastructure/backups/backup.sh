@@ -14,8 +14,8 @@
 set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 
-ROOT="${1:-${BACKUP_DIR:-$REPO_ROOT/backups}}"
-KEEP_DAYS="${BACKUP_KEEP_DAYS:-14}"
+ROOT="${1:-$(env_value BACKUP_DIR "$REPO_ROOT/backups")}"
+KEEP_DAYS="$(env_value BACKUP_KEEP_DAYS 14)"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 WORK="$ROOT/$STAMP.partial"
 umask 077

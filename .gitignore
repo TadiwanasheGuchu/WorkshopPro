@@ -31,3 +31,6 @@ playwright-report/
 
 # Local backups (contain customer data)
 /backups/
+
+# Deployment state (rollback points)
+/.deploy/

@@ -43,7 +43,7 @@ Then sign in at http://localhost:3000 and invite staff from **Users & roles**.
 
 The backend applies database migrations automatically on start (`RUN_MIGRATIONS=false` disables this).
 
-Photos are stored in the bundled SeaweedFS (S3-compatible, not published); set `STORAGE_*` to use a managed S3-compatible service instead. Only nginx (and Mailpit) are published, on `127.0.0.1`. Set `WEB_BIND=0.0.0.0` to serve the local network on an on-premises install. For production, set `ENVIRONMENT=production`, a real `SMTP_*` server, `APP_BASE_URL`, and serve over HTTPS.
+Photos are stored in the bundled SeaweedFS (S3-compatible, not published); set `STORAGE_*` to use a managed S3-compatible service instead. Only nginx (and Mailpit) are published, on `127.0.0.1`. Set `WEB_BIND=0.0.0.0` to serve the local network on an on-premises install. For production use `docker-compose.prod.yml` (HTTPS edge) and follow [docs/deployment/installation.md](docs/deployment/installation.md).
 
 ```bash
 docker compose logs -f backend      # follow API logs

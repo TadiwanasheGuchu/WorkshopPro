@@ -4,6 +4,8 @@
 #   infrastructure/backups/restore.sh <backup-dir> [--yes]
 #
 # REPLACES the project's database and overwrites stored files with the backup's copies.
+# When the worker starts again it sends notifications that were still queued at backup
+# time (the restore drill does not start the worker).
 # Without --yes it asks for confirmation. The backend runs migrations on start, so a
 # backup from an older release is upgraded automatically.
 set -euo pipefail
@@ -50,5 +52,7 @@ if ! dc exec -T backend python -m app.cli verify-restore --manifest - < "$BACKUP
   die "verification failed; application left stopped (backend is up for inspection)"
 fi
 
-dc up -d >/dev/null
+# RESTORE_START_SERVICES limits what starts afterwards (the drill omits the worker).
+# shellcheck disable=SC2086
+dc up -d ${RESTORE_START_SERVICES:-} >/dev/null
 log "Restore complete"

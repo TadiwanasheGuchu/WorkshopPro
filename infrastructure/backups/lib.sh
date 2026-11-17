@@ -9,7 +9,7 @@ cd "$REPO_ROOT"
 env_value() {  # env_value NAME DEFAULT: environment first, then .env, then the default
   local value="${!1:-}"
   if [ -z "$value" ] && [ -f .env ]; then
-    value="$(grep -E "^$1=" .env | tail -n 1 | cut -d= -f2- | sed -e 's/^["'\'']//' -e 's/["'\'']$//')"
+    value="$(grep -E "^$1=" .env | tail -n 1 | cut -d= -f2- | sed -e 's/[[:space:]]\+#.*$//' -e 's/^["'\'']//' -e 's/["'\'']$//')"
   fi
   printf '%s' "${value:-$2}"
 }
