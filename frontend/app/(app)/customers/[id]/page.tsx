@@ -97,6 +97,11 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
               <p className="border-t border-border px-4 py-2 text-xs text-muted">Outstanding is the unpaid balance of issued invoices. Unapplied credit is money received but not yet applied to an invoice.</p>
             </Panel>
           ) : null}
+          {canInAnyBranch(me, P.NOTIFICATIONS_VIEW) ? (
+            <Link href={`/notifications?customer=${c.id}`} className="block text-sm text-steel hover:underline">
+              Messages sent to this customer
+            </Link>
+          ) : null}
           <Panel title="Contact">
             <DetailList
               items={[

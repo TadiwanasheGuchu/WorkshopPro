@@ -62,7 +62,7 @@ from app.schemas.job_card import (
     TransitionRequest,
     VehicleRef,
 )
-from app.services import audit, inspection_summary, numbering
+from app.services import audit, inspection_summary, notifications, numbering
 from app.services.common import get_scoped
 from app.services.job_workflow import (
     LABELS,
@@ -690,6 +690,17 @@ def create_job_card(db: Session, principal: Principal, body: JobCardCreate) -> J
         if body.odometer_correction_reason
         else None,
     )
+    notifications.notify(
+        db,
+        organisation_id=job.organisation_id,
+        branch_id=job.branch_id,
+        customer_id=job.customer_id,
+        event_name="vehicle_received",
+        context={"job_number": job.job_number, "vehicle": notifications.vehicle_label(vehicle)},
+        related_type="job_card",
+        related_id=job.id,
+        actor=principal,
+    )
     db.commit()
     return get_job_card(db, principal, job.id)
 
@@ -777,6 +788,21 @@ def transition(
         job.handover_notes = body.handover_notes
     if target == JobStatus.CANCELLED:
         job.cancellation_reason = body.cancellation_reason
+    if target == JobStatus.READY_FOR_COLLECTION:
+        notifications.notify(
+            db,
+            organisation_id=job.organisation_id,
+            branch_id=job.branch_id,
+            customer_id=job.customer_id,
+            event_name="ready_for_collection",
+            context={
+                "job_number": job.job_number,
+                "vehicle": notifications.vehicle_label(db.get_one(Vehicle, job.vehicle_id)),
+            },
+            related_type="job_card",
+            related_id=job.id,
+            actor=principal,
+        )
     if target in TERMINAL:
         # Stock held for this job goes back to the shelf (imported here: job_parts
         # depends on this module).

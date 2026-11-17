@@ -13,7 +13,7 @@ Project rules and product specification: [`CLAUDE.md`](CLAUDE.md). Phase plan an
 | Frontend | Next.js 16 (App Router), TypeScript strict, Tailwind CSS 4, Radix UI, React Hook Form, Zod |
 | Backend | Python 3.12+, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic |
 | Data | PostgreSQL 16, Redis 7 |
-| Runtime | Docker Compose, nginx edge, SeaweedFS (S3-compatible photo storage), Mailpit (local email) |
+| Runtime | Docker Compose, nginx edge, Celery worker (notifications, retries), SeaweedFS (S3-compatible photo storage), Mailpit (local email) |
 
 ## Quick start (Docker)
 
@@ -39,7 +39,7 @@ Then sign in at http://localhost:3000 and invite staff from **Users & roles**.
 | http://localhost:3000 | Web app (nginx routes `/api` to the backend) |
 | http://localhost:3000/api/v1/health/ready | API readiness (PostgreSQL + Redis) |
 | http://localhost:3000/api/docs | OpenAPI docs (disabled when `ENVIRONMENT=production`) |
-| http://localhost:8025 | Mailpit: invitation and password-reset emails sent locally |
+| http://localhost:8025 | Mailpit: all emails sent locally (invitations, password resets, customer notifications) |
 
 The backend applies database migrations automatically on start (`RUN_MIGRATIONS=false` disables this).
 

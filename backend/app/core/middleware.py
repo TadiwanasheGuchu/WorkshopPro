@@ -29,6 +29,11 @@ SECURITY_HEADERS = {
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
+# Server-to-server callbacks authenticate with a signature (checked in the route) and use
+# no cookies, so the cookie-based CSRF check does not apply to them.
+CSRF_EXEMPT_PREFIXES = ("/api/v1/webhooks/",)
+
+
 def _csrf_cookie_matches(request: Request) -> bool:
     """Double-submit check: the X-CSRF-Token header must equal the CSRF cookie.
 
@@ -55,7 +60,11 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         client_ip_var.set(valid_ip(request.client.host if request.client else None))
         user_agent_var.set(request.headers.get("user-agent", "")[:300] or None)
 
-        if request.method not in SAFE_METHODS and not _csrf_cookie_matches(request):
+        if (
+            request.method not in SAFE_METHODS
+            and not request.url.path.startswith(CSRF_EXEMPT_PREFIXES)
+            and not _csrf_cookie_matches(request)
+        ):
             response: Response = JSONResponse(
                 {
                     "error": {

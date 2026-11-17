@@ -56,6 +56,7 @@ from app.models.job_card import (
     JobNote,
     JobStatusHistory,
 )
+from app.models.notification import Notification, NotificationTemplate
 from app.models.organisation import (
     DocumentSequence,
     Organisation,
@@ -108,6 +109,8 @@ __all__ = [
     "JobCard",
     "JobNote",
     "JobStatusHistory",
+    "Notification",
+    "NotificationTemplate",
     "Organisation",
     "OrganisationSettings",
     "Part",

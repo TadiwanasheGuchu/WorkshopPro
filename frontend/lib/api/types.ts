@@ -968,3 +968,43 @@ export interface InventoryReport {
   reconciliation: { stock_levels_checked: number; on_hand_mismatches: number; reserved_mismatches: number };
   definitions: { term: string; definition: string }[];
 }
+
+// --------------------------------------------------------------------------- notifications
+
+export type NotificationEvent = "vehicle_received" | "quotation_sent" | "ready_for_collection" | "invoice_issued";
+export type NotificationStatus = "queued" | "sent" | "delivered" | "read" | "failed" | "skipped";
+
+export interface NotificationEntry {
+  id: UUID;
+  event: NotificationEvent;
+  event_label: string;
+  channel: "email" | "whatsapp" | "none";
+  recipient: string | null;
+  subject: string | null;
+  body: string;
+  status: NotificationStatus;
+  skip_reason: string | null;
+  attempts: number;
+  last_error: string | null;
+  provider: string | null;
+  customer: Ref;
+  related_type: string | null;
+  related_id: UUID | null;
+  created_at: string;
+  sent_at: string | null;
+  delivered_at: string | null;
+  failed_at: string | null;
+  can_retry: boolean;
+}
+
+export interface NotificationTemplate {
+  event: NotificationEvent;
+  label: string;
+  is_enabled: boolean;
+  email_subject: string;
+  email_body: string;
+  whatsapp_template_name: string | null;
+  whatsapp_language: string;
+  whatsapp_params: string[];
+  placeholders: Record<string, string>;
+}

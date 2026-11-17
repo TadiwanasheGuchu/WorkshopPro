@@ -1,7 +1,7 @@
 import type { Me } from "./api/types";
 import { P, can, canInAnyBranch } from "./permissions";
 
-export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments" | "reports" | "parts" | "movements" | "locations" | "suppliers" | "purchase_orders";
+export type NavIcon = "dashboard" | "users" | "branches" | "settings" | "audit" | "customers" | "vehicles" | "job_cards" | "appointments" | "quotations" | "invoices" | "payments" | "reports" | "parts" | "movements" | "locations" | "suppliers" | "purchase_orders" | "notifications";
 
 export interface NavItem {
   href: string;
@@ -74,6 +74,9 @@ export function navigationFor(me: Me): NavGroup[] {
     finance.push({ href: "/payments", label: "Payments", icon: "payments" });
   }
   if (finance.length) groups.push({ label: "Finance", items: finance });
+  if (canInAnyBranch(me, P.NOTIFICATIONS_VIEW)) {
+    groups.push({ label: "Customer experience", items: [{ href: "/notifications", label: "Notifications", icon: "notifications" }] });
+  }
   if (canInAnyBranch(me, P.REPORTS_FINANCIAL) || canInAnyBranch(me, P.REPORTS_OPERATIONAL) || canInAnyBranch(me, P.REPORTS_INVENTORY)) {
     groups.push({ label: "Analytics", items: [{ href: "/reports", label: "Reports", icon: "reports" }] });
   }

@@ -21,7 +21,6 @@ from app.core.context import client_ip_var, user_agent_var
 from app.core.errors import AppError, ConflictError, NotFoundError, PermissionDeniedError
 from app.core.security import hash_token, new_token
 from app.core.time import utcnow
-from app.integrations.email import OutgoingEmail
 from app.models import (
     Branch,
     Customer,
@@ -58,7 +57,7 @@ from app.schemas.quotation import (
     VersionRead,
     VersionSummary,
 )
-from app.services import audit, numbering
+from app.services import audit, notifications, numbering
 from app.services.job_cards import get_visible_job_card
 from app.services.job_workflow import TERMINAL, JobStatus
 from app.services.lines import ITEM_COLUMNS, price_lines
@@ -458,7 +457,7 @@ def send(
     settings: Settings,
     quotation_id: uuid.UUID,
     email_customer: bool,
-) -> tuple[SendResult, OutgoingEmail | None]:
+) -> SendResult:
     q, job = _load(db, principal, quotation_id, P.QUOTATIONS_MANAGE)
     if JobStatus(job.status) in TERMINAL:
         raise ConflictError("This job is closed.")
@@ -478,7 +477,6 @@ def send(
         raise ConflictError("The 'valid until' date is in the past.")
     v.status, v.sent_at, v.sent_by_user_id = "sent", utcnow(), principal.user_id
     url = _issue_link(db, settings, v, tz)
-    recipient = _primary_email(db, q.customer_id) if email_customer else None
     audit.record(
         db,
         organisation_id=principal.organisation_id,
@@ -488,29 +486,39 @@ def send(
         entity_type="job_card",
         entity_id=job.id,
         summary=f"Quotation {q.quote_number} v{v.version_number} sent "
-        f"({v.currency_code} {v.total}){' by email' if recipient else ''}",
+        f"({v.currency_code} {v.total})",
         changes={"quotation_id": q.id, "version": v.version_number, "total": v.total},
     )
-    db.commit()
-    email = None
-    if recipient:
-        org = db.get_one(Organisation, q.organisation_id)
-        customer = db.get_one(Customer, q.customer_id)
-        email = OutgoingEmail(
-            to=recipient,
-            subject=f"Quotation {q.quote_number} from {org.name}",
-            text=(
-                f"Hello {customer.display_name},\n\n"
-                f"{org.name} has prepared quotation {q.quote_number} for job {job.job_number}.\n"
-                f"Total: {v.currency_code} {v.total:,.2f}\n"
-                f"Valid until: {v.valid_until:%d/%m/%Y}\n\n"
-                f"Review and approve or decline it here:\n{url}\n\n"
-                "Opening the link does not approve the work.\n"
-            ),
+    notification = None
+    if email_customer:
+        vehicle = db.get_one(Vehicle, job.vehicle_id)
+        notification = notifications.notify(
+            db,
+            organisation_id=q.organisation_id,
+            branch_id=q.branch_id,
+            customer_id=q.customer_id,
+            event_name="quotation_sent",
+            context={
+                "job_number": job.job_number,
+                "vehicle": notifications.vehicle_label(vehicle),
+                "quote_number": q.quote_number,
+                "total": notifications.money_label(v.total, v.currency_code),
+                "valid_until": f"{v.valid_until:%d/%m/%Y}" if v.valid_until else "",
+            },
+            link=url,
+            related_type="quotation",
+            related_id=q.id,
+            actor=principal,
         )
+    db.commit()
+    sent_to = notification.recipient if notification and notification.status == "queued" else None
     return SendResult(
-        quotation=read(db, principal, q, job), approval_url=url, emailed_to=recipient
-    ), email
+        quotation=read(db, principal, q, job),
+        approval_url=url,
+        emailed_to=sent_to,
+        notification_channel=notification.channel if notification else None,
+        notification_skipped=notification.skip_reason if notification else None,
+    )
 
 
 def new_link(db: Session, principal: Principal, settings: Settings, quotation_id: uuid.UUID) -> str:

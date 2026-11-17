@@ -68,6 +68,21 @@ class Settings(BaseSettings):
     storage_region: str = "us-east-1"
     storage_auto_create_bucket: bool = True
 
+    # --- Background jobs (Celery, Redis broker) ---
+    # Eager mode runs tasks in-process; used by tests and single-process development.
+    celery_eager: bool = False
+
+    # --- WhatsApp (official WhatsApp Business Platform only; never WhatsApp Web) ---
+    # "log" records messages without sending; "meta" uses the Cloud API and needs the
+    # credentials below from the environment or a secrets manager.
+    whatsapp_provider: Literal["log", "meta"] = "log"
+    whatsapp_api_base: str = "https://graph.facebook.com/v21.0"
+    whatsapp_phone_number_id: str = ""
+    whatsapp_access_token: str = ""
+    # Used to verify webhook signatures (X-Hub-Signature-256) and the subscription.
+    whatsapp_app_secret: str = ""
+    whatsapp_webhook_verify_token: str = ""
+
     @field_validator("cookie_secure", mode="before")
     @classmethod
     def _empty_is_unset(cls, value: object) -> object:

@@ -34,6 +34,7 @@ from app.models import (
     QuotationItem,
     QuotationVersion,
     User,
+    Vehicle,
 )
 from app.permissions.catalogue import P
 from app.permissions.principal import Principal
@@ -49,7 +50,7 @@ from app.schemas.invoice import (
 )
 from app.schemas.job_card import Ref
 from app.schemas.quotation import ItemRead
-from app.services import audit, numbering
+from app.services import audit, notifications, numbering
 from app.services.job_cards import get_visible_job_card
 from app.services.job_workflow import JobStatus
 from app.services.lines import ITEM_COLUMNS, price_lines
@@ -466,6 +467,28 @@ def issue(db: Session, principal: Principal, invoice_id: uuid.UUID) -> InvoiceRe
         entity_id=inv.id,
         summary=f"Invoice {inv.invoice_number} issued for {inv.currency_code} {inv.total}",
         changes={"total": [None, inv.total], "due_date": [None, inv.due_date]},
+    )
+    job_number, vehicle = "", ""
+    if inv.job_card_id:
+        job = db.get_one(JobCard, inv.job_card_id)
+        job_number = job.job_number
+        vehicle = notifications.vehicle_label(db.get_one(Vehicle, job.vehicle_id))
+    notifications.notify(
+        db,
+        organisation_id=inv.organisation_id,
+        branch_id=inv.branch_id,
+        customer_id=inv.customer_id,
+        event_name="invoice_issued",
+        context={
+            "job_number": job_number,
+            "vehicle": vehicle,
+            "invoice_number": inv.invoice_number or "",
+            "amount_due": notifications.money_label(balance_due(inv), inv.currency_code),
+            "due_date": f"{inv.due_date:%d/%m/%Y}" if inv.due_date else "",
+        },
+        related_type="invoice",
+        related_id=inv.id,
+        actor=principal,
     )
     db.commit()
     return read(db, principal, inv)

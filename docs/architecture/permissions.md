@@ -57,6 +57,8 @@ request → wp_session cookie → session row (not revoked, not expired, user ac
 | `payments.refund` | branch | Refund overpayments and reverse payments recorded in error |
 | `reports.operational` | branch | Operations report: jobs, turnaround, quotation outcomes, mechanic workload |
 | `reports.financial` | branch | Financial report: invoiced, credited, received, refunds, receivables |
+| `notifications.view` | branch | Customer notification log and templates (read); retry failed messages |
+| `notifications.manage` | organisation | Turn notifications on or off; edit templates and WhatsApp template names |
 | `reports.inventory` | branch | Inventory report: stock value at cost, movements, parts used, purchasing, stock check |
 | `inventory.view` | branch | Parts catalogue, stock levels and movements for the branch (costs hidden) |
 | `inventory.catalogue` | organisation | Add and edit parts, categories and prices; see cost prices |

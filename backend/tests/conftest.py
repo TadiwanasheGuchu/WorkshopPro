@@ -18,6 +18,8 @@ os.environ["DATABASE_URL"] = os.environ.get(
 os.environ["REDIS_URL"] = os.environ.get("TEST_REDIS_URL", "redis://localhost:6379/15")
 os.environ["ENVIRONMENT"] = "test"
 os.environ["APP_BASE_URL"] = "http://testserver"
+# Background tasks run in-process so tests see their effects immediately.
+os.environ["CELERY_EAGER"] = "true"
 
 import uuid  # noqa: E402
 from collections.abc import Iterator  # noqa: E402
@@ -40,8 +42,10 @@ from app.core.time import utcnow  # noqa: E402
 from app.db.session import get_engine, get_sessionmaker  # noqa: E402
 from app.integrations.email import InMemoryEmailSender, get_email_sender  # noqa: E402
 from app.integrations.storage import InMemoryStorage, get_storage  # noqa: E402
+from app.integrations.whatsapp import LogWhatsAppSender, get_whatsapp_sender  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import Branch, Role, User, UserRoleAssignment  # noqa: E402
+from app.services import notifications  # noqa: E402
 from app.services.organisations import create_organisation  # noqa: E402
 
 PASSWORD = "correct-horse-battery"
@@ -109,12 +113,24 @@ def storage() -> InMemoryStorage:
 
 
 @pytest.fixture
-def app(outbox: InMemoryEmailSender, storage: InMemoryStorage) -> Iterator[Any]:
+def whatsapp() -> LogWhatsAppSender:
+    return LogWhatsAppSender()
+
+
+@pytest.fixture
+def app(
+    outbox: InMemoryEmailSender, storage: InMemoryStorage, whatsapp: LogWhatsAppSender
+) -> Iterator[Any]:
     application = create_app()
     application.dependency_overrides[get_email_sender] = lambda: outbox
     application.dependency_overrides[get_storage] = lambda: storage
+    # The notification worker resolves senders itself; point it at the same fakes.
+    notifications.senders.email = lambda: outbox
+    notifications.senders.whatsapp = lambda: whatsapp
     yield application
     application.dependency_overrides.clear()
+    notifications.senders.email = get_email_sender
+    notifications.senders.whatsapp = get_whatsapp_sender
 
 
 @pytest.fixture

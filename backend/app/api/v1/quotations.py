@@ -1,14 +1,13 @@
 import uuid
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, BackgroundTasks, Query, Request, status
+from fastapi import APIRouter, Query, Request, status
 from pydantic import BaseModel, Field
 
 from app.api.deps import (
     AppSettings,
     CurrentPrincipal,
     DbSession,
-    Mailer,
     Paging,
     RedisClient,
     client_ip,
@@ -85,7 +84,7 @@ def save_draft(
     summary="Send to the customer",
     description=(
         "Locks the version and creates a single-use customer link (returned once). "
-        "Optionally emails the link to the customer's primary email."
+        "Optionally sends it to the customer by WhatsApp or email in the background."
     ),
 )
 def send(
@@ -94,13 +93,8 @@ def send(
     principal: CurrentPrincipal,
     db: DbSession,
     settings: AppSettings,
-    mailer: Mailer,
-    background: BackgroundTasks,
 ) -> SendResult:
-    result, email = quotations.send(db, principal, settings, quotation_id, body.email_customer)
-    if email:
-        background.add_task(mailer.send, email)
-    return result
+    return quotations.send(db, principal, settings, quotation_id, body.email_customer)
 
 
 class LinkResponse(BaseModel):

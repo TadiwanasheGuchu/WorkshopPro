@@ -37,7 +37,9 @@ class DraftUpdate(Schema):
 
 class SendRequest(Schema):
     email_customer: bool = Field(
-        True, description="Email the approval link to the customer's primary email, if any."
+        True,
+        description="Send the approval link to the customer by WhatsApp or email, following "
+        "their consent and preference.",
     )
 
 
@@ -159,7 +161,11 @@ class QuotationRead(BaseModel):
 class SendResult(BaseModel):
     quotation: QuotationRead
     approval_url: str = Field(description="Shown once. Share it with the customer.")
-    emailed_to: str | None
+    emailed_to: str | None = Field(
+        description="Where the link is being sent (email address or WhatsApp number), if any."
+    )
+    notification_channel: Literal["email", "whatsapp", "none"] | None
+    notification_skipped: str | None = Field(description="Why the customer was not notified.")
 
 
 class QuotationListItem(BaseModel):

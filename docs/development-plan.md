@@ -116,9 +116,13 @@ Rules worth knowing:
 - Purchase order amounts exclude tax. Supplier payments and balances owed to suppliers are not recorded (WorkshopPro is not a general ledger); GRNs keep the supplier's invoice reference for reconciliation in the accounting system.
 - Issued parts are not added to invoices automatically yet: the invoice is prefilled from the approved quotation, and the Parts panel shows what was fitted so staff can reconcile before issuing.
 
-## Phase 5 — Customer experience and communications — `next`
+## Phase 5 — Customer experience and communications — `in progress`
 
-Customer portal with strict ownership scoping, public approval tokens, appointment requests, WhatsApp Business Platform + email adaptors behind an interface, templates, consent, delivery logs, retries, service reminders.
+| # | Deliverable | Status |
+|---|---|---|
+| 5a | Notifications (ADR 0006): Celery worker in Compose, WhatsApp Business Platform and email behind adaptors, consent-based channel choice, per-event templates with restricted placeholders, delivery log with provider reference and failure reason, retries with backoff, periodic sweep, signed delivery-status webhook, Notifications screen and templates. Events: vehicle received, quotation ready (link never stored), ready for collection, invoice issued. | done |
+| 5b | Customer portal: accounts per customer, sign-in, own vehicles, job progress, quotations (approve/decline), invoices and receipts, service history, contact details | next |
+| 5c | Appointment requests from the portal; service reminders | planned |
 
 ## Phase 6 — Production readiness and pilot — `planned`
 

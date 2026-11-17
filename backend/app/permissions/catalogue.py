@@ -62,6 +62,8 @@ class P(StrEnum):
     REPORTS_OPERATIONAL = "reports.operational"
     REPORTS_FINANCIAL = "reports.financial"
     REPORTS_INVENTORY = "reports.inventory"
+    NOTIFICATIONS_VIEW = "notifications.view"
+    NOTIFICATIONS_MANAGE = "notifications.manage"
     INVENTORY_VIEW = "inventory.view"
     INVENTORY_CATALOGUE = "inventory.catalogue"
     INVENTORY_ADJUST = "inventory.adjust"
@@ -322,6 +324,20 @@ PERMISSIONS: tuple[PermissionDef, ...] = (
         Scope.BRANCH,
     ),
     PermissionDef(
+        P.NOTIFICATIONS_VIEW,
+        "Customer communication",
+        "View customer notifications",
+        "See messages sent to customers, their delivery status and failures; retry failed ones.",
+        Scope.BRANCH,
+    ),
+    PermissionDef(
+        P.NOTIFICATIONS_MANAGE,
+        "Customer communication",
+        "Manage notification templates",
+        "Turn customer notifications on or off and edit their wording for the organisation.",
+        Scope.ORGANISATION,
+    ),
+    PermissionDef(
         P.INVENTORY_VIEW,
         "Inventory",
         "View parts and stock",
@@ -454,6 +470,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.REPORTS_OPERATIONAL,
                 P.REPORTS_FINANCIAL,
                 P.REPORTS_INVENTORY,
+                P.NOTIFICATIONS_VIEW,
                 P.INVENTORY_VIEW,
                 P.INVENTORY_TRANSFER,
                 P.INVENTORY_ISSUE,
@@ -487,6 +504,7 @@ DEFAULT_ROLES: tuple[RoleTemplate, ...] = (
                 P.INVOICES_MANAGE,
                 P.PAYMENTS_RECORD,
                 P.INVENTORY_VIEW,
+                P.NOTIFICATIONS_VIEW,
             }
         ),
     ),

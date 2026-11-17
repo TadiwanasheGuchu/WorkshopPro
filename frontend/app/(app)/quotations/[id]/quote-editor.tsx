@@ -109,8 +109,8 @@ function CopyLink({ url }: { url: string }) {
 function SendButton({ quote }: { quote: Quotation }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState(Boolean(quote.customer_email));
-  const [result, setResult] = useState<{ url: string; emailedTo: string | null } | null>(null);
+  const [email, setEmail] = useState(true);
+  const [result, setResult] = useState<{ url: string; sentTo: string | null; channel: string | null; skipped: string | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,7 +132,12 @@ function SendButton({ quote }: { quote: Quotation }) {
           {error ? <Alert tone="error">{error}</Alert> : null}
           {result ? (
             <>
-              {result.emailedTo ? <Alert tone="success">Emailed to {result.emailedTo}.</Alert> : null}
+              {result.sentTo ? (
+                <Alert tone="success">
+                  Sending by {result.channel === "whatsapp" ? "WhatsApp" : "email"} to {result.sentTo}. Delivery is tracked under Notifications.
+                </Alert>
+              ) : null}
+              {result.skipped ? <Alert tone="info">Not sent automatically: {result.skipped} Share the link yourself.</Alert> : null}
               <CopyLink url={result.url} />
               <div className="flex justify-end">
                 <Button onClick={() => (setOpen(false), router.refresh())}>Done</Button>
@@ -141,10 +146,9 @@ function SendButton({ quote }: { quote: Quotation }) {
           ) : (
             <>
               <Checkbox
-                label={quote.customer_email ? `Email the link to ${quote.customer_email}` : "Email the link"}
-                description={quote.customer_email ? undefined : "The customer has no email address on file."}
+                label="Send the link to the customer"
+                description="By WhatsApp or email, following the customer's consent and preferred contact method."
                 checked={email}
-                disabled={!quote.customer_email}
                 onChange={(e) => setEmail(e.target.checked)}
               />
               <div className="flex justify-end gap-2">
@@ -156,8 +160,12 @@ function SendButton({ quote }: { quote: Quotation }) {
                     setBusy(true);
                     setError(null);
                     try {
-                      const r = await api<{ approval_url: string; emailed_to: string | null }>("POST", `/quotations/${quote.id}/send`, { email_customer: email });
-                      setResult({ url: r.approval_url, emailedTo: r.emailed_to });
+                      const r = await api<{ approval_url: string; emailed_to: string | null; notification_channel: string | null; notification_skipped: string | null }>(
+                        "POST",
+                        `/quotations/${quote.id}/send`,
+                        { email_customer: email },
+                      );
+                      setResult({ url: r.approval_url, sentTo: r.emailed_to, channel: r.notification_channel, skipped: r.notification_skipped });
                     } catch (e) {
                       setError(errorMessage(e));
                     } finally {
