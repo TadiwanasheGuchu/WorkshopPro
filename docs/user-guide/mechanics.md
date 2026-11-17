@@ -13,8 +13,9 @@ quotation and the parts issued.
 
 The buttons at the bottom of the job show only the next steps you are allowed to take,
 for example **Start diagnosis**, **Start repair**, **Send to quality check**.
-If **Start repair** is missing, usually the customer has not approved the work yet — check with
-reception or the manager. Do not start chargeable work without approval.
+If **Start repair** is missing, the customer has not approved the work yet, or the job has
+been waiting for approval: then the manager releases it to the workshop once the customer
+approves. Do not start chargeable work without approval.
 
 ## Inspections
 

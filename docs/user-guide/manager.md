@@ -27,6 +27,10 @@ Each job shows the allowed next steps. Typical path:
 
 Every change is recorded with your name and time in the job's status history.
 
+When the customer approves a quotation, the job stays in **Awaiting quotation approval**
+until you release it with **Start repair** (or **Waiting for parts**), so you decide when
+it goes back into the workshop.
+
 ## Approval exceptions
 
 If work must start before a quotation is approved — the customer approved verbally,

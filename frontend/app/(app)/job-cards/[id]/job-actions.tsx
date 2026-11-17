@@ -41,13 +41,18 @@ function useMutation() {
 
 // --------------------------------------------------------------------------- status
 
-const PRIMARY_NEXT: JobStatus[] = [
-  "diagnosis_in_progress",
-  "repair_in_progress",
-  "quality_inspection",
-  "ready_for_collection",
-  "completed",
-];
+/** The normal next step from each status: shown as the single primary (orange) action.
+ *  Other allowed moves (rework, waiting for parts, cancel) stay secondary. */
+const FORWARD: Partial<Record<JobStatus, JobStatus[]>> = {
+  vehicle_received: ["inspection_pending", "diagnosis_in_progress"],
+  inspection_pending: ["diagnosis_in_progress"],
+  diagnosis_in_progress: ["awaiting_approval", "repair_in_progress"],
+  awaiting_approval: ["repair_in_progress", "awaiting_parts"],
+  awaiting_parts: ["repair_in_progress"],
+  repair_in_progress: ["quality_inspection"],
+  quality_inspection: ["ready_for_collection"],
+  ready_for_collection: ["completed"],
+};
 
 export function StatusActions({ job }: { job: JobCardDetail }) {
   const [target, setTarget] = useState<JobStatus | null>(null);
@@ -58,7 +63,9 @@ export function StatusActions({ job }: { job: JobCardDetail }) {
   const options = job.capabilities.transitions;
   if (!options.length) return null;
 
-  const primary = options.find((o) => o.allowed && PRIMARY_NEXT.includes(o.to_status) && o.to_status !== "completed") ?? null;
+  const forward = FORWARD[job.status] ?? [];
+  const primary =
+    forward.map((to) => options.find((o) => o.allowed && o.to_status === to)).find((o) => o !== undefined) ?? null;
 
   function open(to: JobStatus) {
     setTarget(to);
