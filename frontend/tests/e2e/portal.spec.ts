@@ -80,6 +80,27 @@ test("customer portal: invited by email, follows the job and approves the quotat
   const consents = await apiCall<{ channel: string; status: string; method: string }[]>(page, "GET", `/customers/${customer.id}/consents`);
   expect(consents[0]).toMatchObject({ channel: "whatsapp", status: "granted", method: "customer_portal" });
 
+  // Request a booking for tomorrow; the workshop confirms it.
+  const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Windhoek" }).format(new Date(Date.now() + 86_400_000));
+  await portal.getByRole("link", { name: "Bookings" }).click();
+  await portal.getByLabel("Preferred day").fill(tomorrow);
+  await portal.getByLabel("Time of day").selectOption("afternoon");
+  await portal.getByLabel("What do you need?").fill(`Aircon not cold ${run}`);
+  await portal.getByRole("button", { name: "Request booking" }).click();
+  await expect(portal.getByText("Waiting for the workshop")).toBeVisible();
+
+  await page.goto("/appointments");
+  const bookingRequest = page.locator("li", { hasText: `Aircon not cold ${run}` });
+  await bookingRequest.getByRole("button", { name: "Confirm" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Start")).toHaveValue("13:00");
+  await dialog.getByRole("button", { name: "Book appointment" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator("li", { hasText: `Aircon not cold ${run}` })).toHaveCount(0);
+
+  await portal.reload();
+  await expect(portal.getByText("Booked", { exact: true })).toBeVisible();
+
   // Signing out ends the session.
   await portal.getByRole("button", { name: "Sign out" }).click();
   await expect(portal).toHaveURL(/\/portal\/sign-in$/);

@@ -5,11 +5,12 @@ with the background job that sends the message.
 """
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -24,7 +25,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
-EVENTS = ("vehicle_received", "quotation_sent", "ready_for_collection", "invoice_issued")
+EVENTS = (
+    "vehicle_received",
+    "quotation_sent",
+    "ready_for_collection",
+    "invoice_issued",
+    "appointment_confirmed",
+    "service_reminder",
+)
 STATUSES = ("queued", "sent", "delivered", "read", "failed", "skipped")
 
 
@@ -100,4 +108,25 @@ class Notification(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT")
+    )
+
+
+class ServiceReminder(UUIDPrimaryKeyMixin, Base):
+    """One row per vehicle and due date, so a reminder is never sent twice."""
+
+    __tablename__ = "service_reminders"
+    __table_args__ = (UniqueConstraint("vehicle_id", "due_date"),)
+
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organisations.id", ondelete="RESTRICT")
+    )
+    vehicle_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vehicles.id", ondelete="RESTRICT")
+    )
+    due_date: Mapped[date] = mapped_column(Date)
+    notification_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="RESTRICT")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()")
     )

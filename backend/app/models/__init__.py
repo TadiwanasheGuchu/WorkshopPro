@@ -4,7 +4,7 @@ Import every model module here so Alembic autogenerate sees all tables.
 """
 
 from app.db.base import Base
-from app.models.appointment import Appointment
+from app.models.appointment import Appointment, AppointmentRequest
 from app.models.audit import AuditLog
 from app.models.branch import Branch, BranchOperatingHours, ServiceBay
 from app.models.customer import (
@@ -56,7 +56,7 @@ from app.models.job_card import (
     JobNote,
     JobStatusHistory,
 )
-from app.models.notification import Notification, NotificationTemplate
+from app.models.notification import Notification, NotificationTemplate, ServiceReminder
 from app.models.organisation import (
     DocumentSequence,
     Organisation,
@@ -84,6 +84,7 @@ from app.models.quotation import (
 
 __all__ = [
     "Appointment",
+    "AppointmentRequest",
     "AuditLog",
     "Base",
     "Branch",
@@ -131,6 +132,7 @@ __all__ = [
     "Role",
     "RolePermission",
     "ServiceBay",
+    "ServiceReminder",
     "StockLevel",
     "StockLocation",
     "StockMovement",

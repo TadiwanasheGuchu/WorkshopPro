@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -56,3 +56,47 @@ class Appointment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT")
     )
+
+
+class AppointmentRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A customer's request for a booking (from the portal). Staff confirm it into an
+    Appointment, or decline it with a reason."""
+
+    __tablename__ = "appointment_requests"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'confirmed', 'declined', 'cancelled')", name="status_valid"
+        ),
+        CheckConstraint("time_of_day IN ('morning', 'afternoon', 'any')", name="time_of_day_valid"),
+        CheckConstraint(
+            "status <> 'confirmed' OR appointment_id IS NOT NULL", name="confirmed_has_booking"
+        ),
+        Index("ix_appointment_requests_branch_status", "branch_id", "status", "preferred_date"),
+        Index("ix_appointment_requests_customer", "customer_id"),
+    )
+
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organisations.id", ondelete="RESTRICT")
+    )
+    branch_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("branches.id", ondelete="RESTRICT")
+    )
+    customer_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="RESTRICT")
+    )
+    vehicle_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vehicles.id", ondelete="RESTRICT")
+    )
+    preferred_date: Mapped[date] = mapped_column(Date)
+    time_of_day: Mapped[str] = mapped_column(String(10))
+    service_requested: Mapped[str] = mapped_column(String(500))
+    notes: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(10), server_default="pending")
+    appointment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("appointments.id", ondelete="RESTRICT")
+    )
+    decline_reason: Mapped[str | None] = mapped_column(String(500))
+    decided_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT")
+    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

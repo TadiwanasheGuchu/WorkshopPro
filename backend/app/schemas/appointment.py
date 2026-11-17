@@ -83,3 +83,53 @@ class DaySchedule(BaseModel):
     is_closed: bool
     bays: list[Ref]
     appointments: list[AppointmentRead]
+
+
+# --------------------------------------------------------------------------- requests
+
+TimeOfDay = Literal["morning", "afternoon", "any"]
+ShortText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=500)]
+RequestStatus = Literal["pending", "confirmed", "declined", "cancelled"]
+
+
+class AppointmentRequestCreate(Schema):
+    """From the customer portal."""
+
+    branch_id: uuid.UUID
+    vehicle_id: uuid.UUID | None = None
+    preferred_date: dt.date
+    time_of_day: TimeOfDay = "any"
+    service_requested: ShortText
+    notes: OptionalStr = Field(None, max_length=2000)
+
+
+class ConfirmRequest(Schema):
+    date: dt.date
+    start_time: dt.time
+    duration_minutes: Duration = 60
+    service_bay_id: uuid.UUID | None = None
+    assigned_user_id: uuid.UUID | None = None
+    notes: OptionalStr = Field(None, max_length=2000)
+    notify_customer: bool = True
+
+
+class DeclineRequest(Schema):
+    reason: ShortText
+
+
+class AppointmentRequestRead(BaseModel):
+    id: uuid.UUID
+    status: RequestStatus
+    branch: Ref
+    customer: Ref
+    vehicle: Ref | None
+    preferred_date: dt.date
+    time_of_day: TimeOfDay
+    service_requested: str
+    notes: str | None
+    decline_reason: str | None
+    appointment_id: uuid.UUID | None
+    appointment_starts_at: dt.datetime | None
+    created_at: dt.datetime
+    decided_by: str | None
+    decided_at: dt.datetime | None

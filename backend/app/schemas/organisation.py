@@ -72,6 +72,7 @@ class SettingsRead(ReadSchema):
     quotation_validity_days: int
     quotation_terms: str | None
     invoice_payment_days: int
+    service_reminder_days: int
     invoice_terms: str | None
 
 
@@ -84,6 +85,7 @@ class SettingsUpdate(UpdateSchema):
             "prices_include_tax",
             "quotation_validity_days",
             "invoice_payment_days",
+            "service_reminder_days",
         }
     )
 
@@ -98,6 +100,9 @@ class SettingsUpdate(UpdateSchema):
         None, ge=0, le=365, description="Days after issue that an invoice falls due (0 = on issue)."
     )
     invoice_terms: OptionalStr = Field(None, max_length=4000)
+    service_reminder_days: int | None = Field(
+        None, ge=1, le=90, description="Days before a vehicle's service due date to remind."
+    )
 
 
 class TaxRateRead(ReadSchema):

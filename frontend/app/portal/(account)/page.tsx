@@ -34,6 +34,12 @@ export default async function PortalHomePage() {
         </Panel>
       ) : null}
 
+      <p className="text-sm">
+        <Link href="/portal/bookings" className="text-steel hover:underline">
+          Book a service
+        </Link>
+      </p>
+
       <Panel title="Your vehicles at the workshop" flush>
         {home.open_jobs.length === 0 ? (
           <p className="px-4 py-3 text-sm text-muted">None of your vehicles are in the workshop right now.</p>

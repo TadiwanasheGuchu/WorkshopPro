@@ -1,3 +1,4 @@
+import datetime as dt
 import re
 import uuid
 from datetime import UTC, datetime
@@ -245,6 +246,10 @@ class VehicleFields(Schema):
     colour: OptionalStr = Field(None, max_length=40)
     existing_damage: OptionalStr = Field(None, max_length=4000)
     notes: OptionalStr = Field(None, max_length=4000)
+    next_service_due_date: dt.date | None = Field(
+        None, description="When the next service is due; the customer is reminded beforehand."
+    )
+    next_service_due_km: int | None = Field(None, ge=0, le=5_000_000)
 
 
 class VehicleCreate(VehicleFields):
@@ -303,6 +308,8 @@ class VehicleRead(BaseModel):
     transmission: Transmission | None
     colour: str | None
     odometer_km: int | None
+    next_service_due_date: dt.date | None
+    next_service_due_km: int | None
     odometer_recorded_at: datetime | None
     existing_damage: str | None
     notes: str | None

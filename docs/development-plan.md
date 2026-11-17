@@ -116,14 +116,16 @@ Rules worth knowing:
 - Purchase order amounts exclude tax. Supplier payments and balances owed to suppliers are not recorded (WorkshopPro is not a general ledger); GRNs keep the supplier's invoice reference for reconciliation in the accounting system.
 - Issued parts are not added to invoices automatically yet: the invoice is prefilled from the approved quotation, and the Parts panel shows what was fitted so staff can reconcile before issuing.
 
-## Phase 5 — Customer experience and communications — `in progress`
+## Phase 5 — Customer experience and communications — `done`
 
 | # | Deliverable | Status |
 |---|---|---|
 | 5a | Notifications (ADR 0006): Celery worker in Compose, WhatsApp Business Platform and email behind adaptors, consent-based channel choice, per-event templates with restricted placeholders, delivery log with provider reference and failure reason, retries with backoff, periodic sweep, signed delivery-status webhook, Notifications screen and templates. Events: vehicle received, quotation ready (link never stored), ready for collection, invoice issued. | done |
 | 5b | Customer portal: portal accounts separate from staff (own session cookie), sign-in by single-use emailed link (15 min, hashes only, no account enumeration, rate limited), every query scoped to the signed-in customer; vehicles, job progress, service history, quotation approve/decline (`customer_portal` decision method), invoices, receipts and inspection PDFs, phone/preferred contact/consent updates; staff invite, resend and remove access from the customer page (migration 0015) | done |
-| 5c | Appointment requests from the portal; service reminders | next |
+| 5c | Booking requests from the portal (own vehicles, active branches, morning/afternoon/any, limit of five waiting, cancel while pending); staff confirm into a booking with the normal conflict rules or decline with a reason, and the customer is notified. Service reminders: next-service due date and km per vehicle, reminder days setting (default 14), hourly worker job, one reminder per vehicle and due date (migration 0016). | done |
 
-## Phase 6 — Production readiness and pilot — `planned`
+**Exit:** met. A customer signs in to the portal by emailed link and sees only their own records, approves a quotation, requests a booking that the workshop confirms, and receives traceable notifications whose delivery, failures and retries are logged (`backend/tests/test_portal.py`, `test_notifications.py`, `test_appointment_requests.py`; Playwright `portal.spec.ts`, `notifications.spec.ts`).
+
+## Phase 6 — Production readiness and pilot — `next`
 
 Security and permission test sweep, query/performance review, Nginx + HTTPS, backups with tested restore, monitoring, deployment and rollback runbooks, user documentation, pilot workshop.

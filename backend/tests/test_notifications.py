@@ -275,6 +275,8 @@ def test_templates(
         "quotation_sent",
         "ready_for_collection",
         "invoice_issued",
+        "appointment_confirmed",
+        "service_reminder",
     ]
     t = templates[0]
     base = {

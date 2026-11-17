@@ -1,9 +1,10 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -203,6 +204,9 @@ class Vehicle(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     colour: Mapped[str | None] = mapped_column(String(40))
     odometer_km: Mapped[int | None] = mapped_column(Integer)
     odometer_recorded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Set by the workshop; drives service reminders.
+    next_service_due_date: Mapped[date | None] = mapped_column(Date)
+    next_service_due_km: Mapped[int | None] = mapped_column(Integer)
     existing_damage: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

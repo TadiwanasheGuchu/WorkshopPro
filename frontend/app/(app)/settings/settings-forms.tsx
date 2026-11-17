@@ -110,6 +110,10 @@ const prefsSchema = z.object({
     .regex(/^\d{1,3}$/, "Whole days only.")
     .refine((v) => Number(v) <= 365, "Between 0 and 365 days."),
   invoice_terms: z.string().max(4000),
+  service_reminder_days: z
+    .string()
+    .regex(/^\d{1,2}$/, "Whole days only.")
+    .refine((v) => Number(v) >= 1 && Number(v) <= 90, "Between 1 and 90 days."),
 });
 type PrefsValues = z.infer<typeof prefsSchema>;
 
@@ -125,6 +129,7 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
       quotation_terms: settings.quotation_terms ?? "",
       invoice_payment_days: String(settings.invoice_payment_days),
       invoice_terms: settings.invoice_terms ?? "",
+      service_reminder_days: String(settings.service_reminder_days),
     },
   });
   const { errors, isSubmitting, isDirty } = form.formState;
@@ -140,6 +145,7 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
         quotation_terms: values.quotation_terms.trim() || null,
         invoice_payment_days: Number(values.invoice_payment_days),
         invoice_terms: values.invoice_terms.trim() || null,
+        service_reminder_days: Number(values.service_reminder_days),
       });
       form.reset(values);
       setMessage({ tone: "success", text: "Preferences saved." });
@@ -196,6 +202,9 @@ export function PreferencesForm({ settings, readOnly }: { settings: Organisation
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Invoices due after (days)" hint="0 means due on the day of issue." error={errors.invoice_payment_days?.message}>
           {(p) => <Input {...p} type="number" min={0} max={365} disabled={readOnly} {...form.register("invoice_payment_days")} />}
+        </Field>
+        <Field label="Service reminders (days before)" hint="When customers are reminded of a vehicle's next service." error={errors.service_reminder_days?.message}>
+          {(p) => <Input {...p} type="number" min={1} max={90} disabled={readOnly} {...form.register("service_reminder_days")} />}
         </Field>
       </div>
       <Field label="Default invoice terms" hint="Copied onto new invoices; editable per draft." error={errors.invoice_terms?.message}>

@@ -19,6 +19,9 @@ export default function PortalAccountLayout({ children }: { children: ReactNode 
             <Link href="/portal" className="text-white/90 hover:text-white">
               Overview
             </Link>
+            <Link href="/portal/bookings" className="text-white/90 hover:text-white">
+              Bookings
+            </Link>
             <Link href="/portal/invoices" className="text-white/90 hover:text-white">
               Invoices
             </Link>

@@ -275,9 +275,8 @@ def upcoming_for_customer(
 # --------------------------------------------------------------------------- writes
 
 
-def create_appointment(
-    db: Session, principal: Principal, body: AppointmentCreate
-) -> AppointmentRead:
+def book(db: Session, principal: Principal, body: AppointmentCreate) -> Appointment:
+    """Validate and add a booking in the caller's transaction (no commit)."""
     principal.require(P.APPOINTMENTS_MANAGE, body.branch_id)
     _validate_refs(
         db,
@@ -318,8 +317,15 @@ def create_appointment(
         summary=f"Appointment booked for {starts_at.astimezone(tz):%d/%m/%Y %H:%M}: "
         f"{body.reason[:80]}",
     )
+    return appt
+
+
+def create_appointment(
+    db: Session, principal: Principal, body: AppointmentCreate
+) -> AppointmentRead:
+    appt = book(db, principal, body)
     db.commit()
-    return _to_read(db, [appt], tz)[0]
+    return _to_read(db, [appt], _tz(db, principal.organisation_id))[0]
 
 
 def update_appointment(

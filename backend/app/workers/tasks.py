@@ -27,3 +27,13 @@ def requeue_stale_notifications() -> int:
     if count:
         logger.info("notifications_requeued", extra={"count": count})
     return count
+
+
+@celery_app.task(name="reminders.service_due")
+def send_service_reminders() -> int:
+    from app.services import appointment_requests
+
+    count = appointment_requests.send_service_reminders()
+    if count:
+        logger.info("service_reminders_sent", extra={"count": count})
+    return count

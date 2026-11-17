@@ -60,6 +60,8 @@ class OrganisationSettings(TimestampMixin, Base):
     quotation_terms: Mapped[str | None] = mapped_column(Text)
     invoice_payment_days: Mapped[int] = mapped_column(Integer, server_default="0")
     invoice_terms: Mapped[str | None] = mapped_column(Text)
+    # Days before a vehicle's next service due date that the reminder is sent.
+    service_reminder_days: Mapped[int] = mapped_column(Integer, server_default="14")
 
 
 class TaxRate(UUIDPrimaryKeyMixin, TimestampMixin, Base):

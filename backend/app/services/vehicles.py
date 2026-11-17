@@ -66,6 +66,8 @@ def _to_read(db: Session, vehicles: list[Vehicle]) -> list[VehicleRead]:
             colour=v.colour,
             odometer_km=v.odometer_km,
             odometer_recorded_at=v.odometer_recorded_at,
+            next_service_due_date=v.next_service_due_date,
+            next_service_due_km=v.next_service_due_km,
             existing_damage=v.existing_damage,
             notes=v.notes,
             archived_at=v.archived_at,

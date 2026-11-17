@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    appointment_requests,
     appointments,
     audit,
     auth,
@@ -49,3 +50,5 @@ api_router.include_router(purchasing.router)
 api_router.include_router(notifications.router)
 api_router.include_router(portal.router)
 api_router.include_router(portal.staff_router)
+api_router.include_router(appointment_requests.router)
+api_router.include_router(appointment_requests.portal_router)

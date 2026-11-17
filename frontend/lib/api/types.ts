@@ -70,6 +70,7 @@ export interface OrganisationSettings {
   quotation_terms: string | null;
   invoice_payment_days: number;
   invoice_terms: string | null;
+  service_reminder_days: number;
 }
 
 export interface TaxRate {
@@ -290,6 +291,8 @@ export interface Vehicle {
   transmission: Transmission | null;
   colour: string | null;
   odometer_km: number | null;
+  next_service_due_date: string | null;
+  next_service_due_km: number | null;
   odometer_recorded_at: string | null;
   existing_damage: string | null;
   notes: string | null;
@@ -971,7 +974,7 @@ export interface InventoryReport {
 
 // --------------------------------------------------------------------------- notifications
 
-export type NotificationEvent = "vehicle_received" | "quotation_sent" | "ready_for_collection" | "invoice_issued";
+export type NotificationEvent = "vehicle_received" | "quotation_sent" | "ready_for_collection" | "invoice_issued" | "appointment_confirmed" | "service_reminder";
 export type NotificationStatus = "queued" | "sent" | "delivered" | "read" | "failed" | "skipped";
 
 export interface NotificationEntry {
@@ -1114,4 +1117,22 @@ export interface PortalAccess {
   email: string | null;
   invited_at: string | null;
   last_sign_in_at: string | null;
+}
+
+export interface AppointmentRequest {
+  id: UUID;
+  status: "pending" | "confirmed" | "declined" | "cancelled";
+  branch: Ref;
+  customer: Ref;
+  vehicle: Ref | null;
+  preferred_date: string;
+  time_of_day: "morning" | "afternoon" | "any";
+  service_requested: string;
+  notes: string | null;
+  decline_reason: string | null;
+  appointment_id: UUID | null;
+  appointment_starts_at: string | null;
+  created_at: string;
+  decided_by: string | null;
+  decided_at: string | null;
 }

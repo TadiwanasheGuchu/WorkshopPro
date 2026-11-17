@@ -79,6 +79,10 @@ PLACEHOLDERS: dict[str, str] = {
     "invoice_number": "Invoice number",
     "amount_due": "Amount due on the invoice",
     "due_date": "Invoice due date",
+    "appointment_date": "Appointment date",
+    "appointment_time": "Appointment start time",
+    "branch_name": "Branch name",
+    "service_due_date": "Date the next service is due",
 }
 
 
@@ -156,6 +160,29 @@ DEFAULTS: dict[str, EventDefaults] = {
             "amount_due",
             "due_date",
         ),
+    ),
+    "appointment_confirmed": EventDefaults(
+        label="Appointment confirmed",
+        subject="Your booking at {workshop_name} on {appointment_date}",
+        body=(
+            "Hello {customer_name},\n\n"
+            "Your booking for {vehicle} is confirmed for {appointment_date} at "
+            "{appointment_time} at {branch_name}.\n\n{workshop_name} {workshop_phone}"
+        ),
+        whatsapp_params=("customer_name", "vehicle", "appointment_date", "appointment_time"),
+        placeholders=(*_COMMON, "vehicle", "appointment_date", "appointment_time", "branch_name"),
+    ),
+    "service_reminder": EventDefaults(
+        label="Service reminder",
+        subject="{vehicle} is due for a service",
+        body=(
+            "Hello {customer_name},\n\n"
+            "Your vehicle {vehicle} is due for its next service on {service_due_date}. "
+            "Contact us to book, or request a booking in our customer portal.\n\n"
+            "{workshop_name} {workshop_phone}"
+        ),
+        whatsapp_params=("customer_name", "vehicle", "service_due_date"),
+        placeholders=(*_COMMON, "vehicle", "service_due_date"),
     ),
 }
 

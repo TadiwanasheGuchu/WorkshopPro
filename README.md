@@ -4,7 +4,7 @@ Automotive workshop management for garages and service centres in Namibia: custo
 
 Project rules and product specification: [`CLAUDE.md`](CLAUDE.md). Phase plan and progress: [`docs/development-plan.md`](docs/development-plan.md).
 
-**Current state:** Phases 0–4 complete. Sign-in and permissions; organisation, branches and settings; customers and vehicles; job cards with an enforced workflow and approval rule; mechanic assignment; mobile inspections with photos; appointments; quotations with versioned customer approval; immutable invoices, credit notes and idempotent payments; PDF documents; parts catalogue and stock ledger; reservations and parts issued to jobs; suppliers, purchase orders and goods received; financial, operations and inventory reports. Customer portal and WhatsApp/email notifications (Phase 5) are next.
+**Current state:** Phases 0–5 complete. Staff app: sign-in and permissions; organisation, branches and settings; customers and vehicles; job cards with an enforced workflow and approval rule; mechanic assignment; mobile inspections with photos; appointments and booking requests; quotations with versioned customer approval; immutable invoices, credit notes and idempotent payments; PDF documents; parts catalogue, stock ledger, reservations and parts issued to jobs; suppliers, purchase orders and goods received; financial, operations and inventory reports; WhatsApp/email notifications with consent, retries and service reminders. Customer portal: sign-in by emailed link, job progress, quotation approval, invoices and receipts, booking requests, contact preferences. Production readiness and a pilot (Phase 6) are next.
 
 ## Stack
 

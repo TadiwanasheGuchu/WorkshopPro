@@ -7,7 +7,14 @@ from pydantic import BaseModel, Field, StringConstraints
 from app.schemas.common import OptionalStr, Schema
 from app.schemas.job_card import Ref
 
-Event = Literal["vehicle_received", "quotation_sent", "ready_for_collection", "invoice_issued"]
+Event = Literal[
+    "vehicle_received",
+    "quotation_sent",
+    "ready_for_collection",
+    "invoice_issued",
+    "appointment_confirmed",
+    "service_reminder",
+]
 Status = Literal["queued", "sent", "delivered", "read", "failed", "skipped"]
 Channel = Literal["email", "whatsapp", "none"]
 

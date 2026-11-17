@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form";
 import { EmptyState, NoAccess, PageHeader, PanelSkeleton } from "@/components/ui/page";
 import { apiGet, query } from "@/lib/api/server";
-import type { Appointment, DaySchedule, Ref } from "@/lib/api/types";
+import type { Appointment, AppointmentRequest, DaySchedule, Page, Ref } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { shortTime } from "@/lib/format";
 import { P, can } from "@/lib/permissions";
 
 import { AppointmentCard } from "./appointment-card";
+import { BookingRequests } from "./booking-requests";
 
 export const metadata: Metadata = { title: "Appointments" };
 
@@ -49,7 +50,11 @@ async function Content({ searchParams }: { searchParams: PageProps<"/appointment
   const branch = branches.find((b) => b.id === params.branch) ?? branches[0];
   const today = todayIn(me.organisation.timezone);
   const day = typeof params.date === "string" && DATE_RE.test(params.date) ? params.date : today;
-  const schedule = await apiGet<DaySchedule>(`/appointments/day${query({ branch_id: branch.id, date: day })}`);
+  const [schedule, requests] = await Promise.all([
+    apiGet<DaySchedule>(`/appointments/day${query({ branch_id: branch.id, date: day })}`),
+    apiGet<Page<AppointmentRequest>>(`/appointment-requests${query({ branch_id: branch.id, page_size: 50 })}`),
+  ]);
+  const requestDays = Object.fromEntries(requests.items.map((r) => [r.preferred_date, heading(r.preferred_date)]));
   const canManage = can(me, P.APPOINTMENTS_MANAGE, branch.id);
   const canCheckIn = canManage && can(me, P.JOB_CARDS_CREATE, branch.id);
   const href = (d: string) => `/appointments${query({ branch: branches.length > 1 ? branch.id : undefined, date: d === today ? undefined : d })}`;
@@ -71,6 +76,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/appointment
           ) : null
         }
       />
+      <BookingRequests requests={requests.items} bays={schedule.bays} canManage={canManage} formatDay={requestDays} />
       <form method="get" className="mb-4 flex flex-wrap items-end gap-2">
         {branches.length > 1 ? (
           <label className="text-sm">

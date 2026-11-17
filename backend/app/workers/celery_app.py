@@ -27,5 +27,10 @@ celery_app.conf.update(
             "task": "notifications.requeue_stale",
             "schedule": 300.0,
         },
+        # Hourly is enough for day-based reminders; each vehicle and due date is sent once.
+        "service-reminders": {
+            "task": "reminders.service_due",
+            "schedule": 3600.0,
+        },
     },
 )

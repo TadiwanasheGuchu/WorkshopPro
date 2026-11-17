@@ -34,6 +34,8 @@ const schema = z
     odometer_correction_reason: z.string().max(300),
     existing_damage: z.string().max(4000),
     notes: z.string().max(4000),
+    next_service_due_date: z.string(),
+    next_service_due_km: z.string().refine((v) => !v || /^\d{1,7}$/.test(v.replace(/\s/g, "")), "Enter kilometres as a whole number."),
   })
   .superRefine((v, ctx) => {
     if (!v.customer) ctx.addIssue({ code: "custom", path: ["customer"], message: "Choose the owner." });
@@ -66,6 +68,8 @@ export function VehicleForm({ vehicle, customer }: { vehicle?: Vehicle; customer
       odometer_correction_reason: "",
       existing_damage: vehicle?.existing_damage ?? "",
       notes: vehicle?.notes ?? "",
+      next_service_due_date: vehicle?.next_service_due_date ?? "",
+      next_service_due_km: vehicle?.next_service_due_km != null ? String(vehicle.next_service_due_km) : "",
     },
   });
   const { errors, isSubmitting } = form.formState;
@@ -87,6 +91,8 @@ export function VehicleForm({ vehicle, customer }: { vehicle?: Vehicle; customer
       odometer_km: v.odometer_km ? Number(v.odometer_km.replace(/\s/g, "")) : null,
       existing_damage: blank(v.existing_damage),
       notes: blank(v.notes),
+      next_service_due_date: v.next_service_due_date || null,
+      next_service_due_km: v.next_service_due_km ? Number(v.next_service_due_km.replace(/\s/g, "")) : null,
     };
     try {
       const saved = vehicle
@@ -172,6 +178,13 @@ export function VehicleForm({ vehicle, customer }: { vehicle?: Vehicle; customer
             {(p) => <Input {...p} {...form.register("odometer_correction_reason")} />}
           </Field>
         ) : null}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Next service due" hint="The customer is reminded beforehand by WhatsApp or email." error={errors.next_service_due_date?.message}>
+          {(p) => <Input {...p} type="date" {...form.register("next_service_due_date")} />}
+        </Field>
+        {text("next_service_due_km", "Next service due at (km)", { inputMode: "numeric" })}
       </div>
 
       <Field label="Existing damage" hint="Scratches, dents and cracks present before the workshop received the vehicle.">
