@@ -1008,3 +1008,110 @@ export interface NotificationTemplate {
   whatsapp_params: string[];
   placeholders: Record<string, string>;
 }
+
+// --------------------------------------------------------------------------- customer portal
+
+export interface PortalMe {
+  customer_name: string;
+  email: string;
+  organisation_name: string;
+  organisation_phone: string | null;
+  organisation_email: string | null;
+  phone: string | null;
+  preferred_contact_method: "phone" | "whatsapp" | "email" | "sms";
+  whatsapp_consent: boolean;
+  email_consent: boolean;
+  timezone: string;
+  date_format: string;
+}
+
+export interface PortalVehicle {
+  id: UUID;
+  label: string;
+  registration_number: string | null;
+  vin: string | null;
+  make: string;
+  model: string;
+  year: number | null;
+  odometer_km: number | null;
+}
+
+export interface PortalJob {
+  id: UUID;
+  job_number: string;
+  vehicle: string;
+  status: JobStatus;
+  status_label: string;
+  received_at: string;
+  promised_at: string | null;
+  collected_at: string | null;
+  complaint: string;
+}
+
+export interface PortalDocumentRef {
+  id: UUID;
+  number: string;
+  status: string;
+  total: string | null;
+  balance_due: string | null;
+  date: string | null;
+}
+
+export interface PortalJobDetail extends PortalJob {
+  work_performed: string | null;
+  history: { label: string; at: string }[];
+  quotation: PortalDocumentRef | null;
+  invoices: PortalDocumentRef[];
+  inspections: PortalDocumentRef[];
+}
+
+export interface PortalQuotation {
+  id: UUID;
+  quote_number: string;
+  version_number: number;
+  status: "sent" | "approved" | "rejected" | "expired";
+  job_number: string;
+  vehicle: string;
+  currency_code: string;
+  prices_include_tax: boolean;
+  valid_until: string | null;
+  items: QuoteItem[];
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  notes: string | null;
+  terms: string | null;
+  decision: "approved" | "rejected" | null;
+  decided_at: string | null;
+  can_decide: boolean;
+}
+
+export interface PortalInvoice {
+  id: UUID;
+  invoice_number: string;
+  job_number: string | null;
+  issue_date: string;
+  due_date: string | null;
+  currency_code: string;
+  total: string;
+  balance_due: string;
+  payment_status: InvoicePaymentStatus;
+  is_overdue: boolean;
+  receipts: PortalDocumentRef[];
+}
+
+export interface PortalHome {
+  me: PortalMe;
+  vehicles: PortalVehicle[];
+  open_jobs: PortalJob[];
+  quotations_to_review: PortalDocumentRef[];
+  outstanding: string;
+  currency_code: string;
+}
+
+export interface PortalAccess {
+  enabled: boolean;
+  email: string | null;
+  invited_at: string | null;
+  last_sign_in_at: string | null;
+}

@@ -8,13 +8,14 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { DetailList, EmptyState, NoAccess, PageHeader, Panel, PanelSkeleton } from "@/components/ui/page";
 import { apiGet } from "@/lib/api/server";
-import type { AuditLogEntry, CustomerBalance, CustomerDetail, JobCardSummary, Page } from "@/lib/api/types";
+import type { AuditLogEntry, CustomerBalance, CustomerDetail, JobCardSummary, Page, PortalAccess } from "@/lib/api/types";
 import { requireMe } from "@/lib/auth";
 import { formatDate, formatMoney } from "@/lib/format";
 import { CONSENT_CHANNEL, CONSENT_METHOD, CONTACT_METHOD, formatPhone, vehicleTitle } from "@/lib/labels";
 import { P, can, canInAnyBranch } from "@/lib/permissions";
 
 import { ArchiveCustomerButton, RecordConsentButton } from "./customer-actions";
+import { PortalAccessControls } from "./portal-access";
 
 export const metadata: Metadata = { title: "Customer" };
 
@@ -39,6 +40,7 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
       : Promise.resolve(null),
   ]);
   const jobs = canInAnyBranch(me, P.JOB_CARDS_VIEW) ? await apiGet<Page<JobCardSummary>>(`/job-cards?customer_id=${id}&page_size=20`) : null;
+  const portalAccess = await apiGet<PortalAccess>(`/customers/${id}/portal`);
   const balance = canInAnyBranch(me, P.INVOICES_VIEW) ? await apiGet<CustomerBalance>(`/customers/${id}/balance`) : null;
   const manage = canInAnyBranch(me, P.CUSTOMERS_MANAGE);
   const manageVehicles = canInAnyBranch(me, P.VEHICLES_MANAGE);
@@ -97,6 +99,19 @@ async function Content({ params }: { params: PageProps<"/customers/[id]">["param
               <p className="border-t border-border px-4 py-2 text-xs text-muted">Outstanding is the unpaid balance of issued invoices. Unapplied credit is money received but not yet applied to an invoice.</p>
             </Panel>
           ) : null}
+          <Panel title="Customer portal">
+            <p className="mb-3 text-sm">
+              {portalAccess.enabled ? (
+                <>
+                  Access for <span className="font-medium">{portalAccess.email}</span>
+                  <span className="block text-xs text-muted">{portalAccess.last_sign_in_at ? `Last signed in ${formatDate(portalAccess.last_sign_in_at, prefs)}` : "Not signed in yet"}</span>
+                </>
+              ) : (
+                <span className="text-muted">No access. The customer can follow jobs, approve quotations and see invoices online.</span>
+              )}
+            </p>
+            <PortalAccessControls customerId={c.id} access={portalAccess} emails={c.contacts.filter((x) => x.kind === "email").map((x) => x.value)} canManage={manage} />
+          </Panel>
           {canInAnyBranch(me, P.NOTIFICATIONS_VIEW) ? (
             <Link href={`/notifications?customer=${c.id}`} className="block text-sm text-steel hover:underline">
               Messages sent to this customer

@@ -121,8 +121,8 @@ Rules worth knowing:
 | # | Deliverable | Status |
 |---|---|---|
 | 5a | Notifications (ADR 0006): Celery worker in Compose, WhatsApp Business Platform and email behind adaptors, consent-based channel choice, per-event templates with restricted placeholders, delivery log with provider reference and failure reason, retries with backoff, periodic sweep, signed delivery-status webhook, Notifications screen and templates. Events: vehicle received, quotation ready (link never stored), ready for collection, invoice issued. | done |
-| 5b | Customer portal: accounts per customer, sign-in, own vehicles, job progress, quotations (approve/decline), invoices and receipts, service history, contact details | next |
-| 5c | Appointment requests from the portal; service reminders | planned |
+| 5b | Customer portal: portal accounts separate from staff (own session cookie), sign-in by single-use emailed link (15 min, hashes only, no account enumeration, rate limited), every query scoped to the signed-in customer; vehicles, job progress, service history, quotation approve/decline (`customer_portal` decision method), invoices, receipts and inspection PDFs, phone/preferred contact/consent updates; staff invite, resend and remove access from the customer page (migration 0015) | done |
+| 5c | Appointment requests from the portal; service reminders | next |
 
 ## Phase 6 — Production readiness and pilot — `planned`
 

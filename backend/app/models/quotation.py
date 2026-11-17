@@ -135,11 +135,12 @@ class QuotationDecision(UUIDPrimaryKeyMixin, Base):
     __table_args__ = (
         CheckConstraint("decision IN ('approved', 'rejected')", name="decision_valid"),
         CheckConstraint(
-            "method IN ('customer_link', 'in_person', 'phone', 'email', 'whatsapp', 'other')",
+            "method IN ('customer_link', 'customer_portal', 'in_person', 'phone', 'email', "
+            "'whatsapp', 'other')",
             name="method_valid",
         ),
         CheckConstraint(
-            "method = 'customer_link' OR recorded_by_user_id IS NOT NULL",
+            "method IN ('customer_link', 'customer_portal') OR recorded_by_user_id IS NOT NULL",
             name="staff_recorded_has_actor",
         ),
     )

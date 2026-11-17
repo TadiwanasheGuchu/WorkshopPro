@@ -35,8 +35,10 @@ from app.models import (
     Vehicle,
 )
 from app.permissions.principal import Principal
+from app.schemas.inspection import InspectionDetail
+from app.schemas.invoice import InvoiceRead, PaymentRead
 from app.schemas.quotation import QuotationRead
-from app.services import inspections, invoices, payments, purchasing, quotations
+from app.services import inspections, invoices, payments, portal, purchasing, quotations
 
 
 @dataclass(frozen=True)
@@ -137,7 +139,10 @@ def public_quotation_pdf(db: Session, token: str) -> Pdf:
 
 
 def invoice_pdf(db: Session, principal: Principal, invoice_id: uuid.UUID) -> Pdf:
-    inv = invoices.get_invoice(db, principal, invoice_id)
+    return _invoice(db, principal, invoices.get_invoice(db, principal, invoice_id))
+
+
+def _invoice(db: Session, principal: Principal, inv: InvoiceRead) -> Pdf:
     content = commercial.invoice(
         org_info(db, principal.organisation_id),
         inv,
@@ -192,9 +197,12 @@ def credit_note_pdf(db: Session, principal: Principal, credit_note_id: uuid.UUID
 
 
 def receipt_pdf(db: Session, principal: Principal, payment_id: uuid.UUID) -> Pdf:
-    pay = payments.get_payment(db, principal, payment_id)
+    return _receipt(db, principal.organisation_id, payments.get_payment(db, principal, payment_id))
+
+
+def _receipt(db: Session, organisation_id: uuid.UUID, pay: PaymentRead) -> Pdf:
     content = commercial.receipt(
-        org_info(db, principal.organisation_id), pay, customer_party(db, pay.customer.id)
+        org_info(db, organisation_id), pay, customer_party(db, pay.customer.id)
     )
     return Pdf(f"{_safe(pay.receipt_number)}.pdf", content)
 
@@ -202,7 +210,14 @@ def receipt_pdf(db: Session, principal: Principal, payment_id: uuid.UUID) -> Pdf
 def inspection_pdf(
     db: Session, principal: Principal, storage: ObjectStorage, inspection_id: uuid.UUID
 ) -> Pdf:
-    ins = inspections.get_inspection(db, principal, inspection_id)
+    return _inspection(
+        db, principal, storage, inspections.get_inspection(db, principal, inspection_id)
+    )
+
+
+def _inspection(
+    db: Session, principal: Principal, storage: ObjectStorage, ins: InspectionDetail
+) -> Pdf:
     # Only files attached to this inspection can be embedded.
     keys = dict(
         db.execute(
@@ -251,3 +266,33 @@ def purchase_order_pdf(db: Session, principal: Principal, po_id: uuid.UUID) -> P
         org_info(db, principal.organisation_id), po, supplier, deliver_to, s.account_number
     )
     return Pdf(f"{_safe(po.po_number)}.pdf", content)
+
+
+# --------------------------------------------------------------------------- customer portal
+# Each record is first scoped to the signed-in customer by app.services.portal; the
+# permissionless principal only feeds read models that need one.
+
+
+def portal_quotation_pdf(db: Session, who: portal.PortalPrincipal, quotation_id: uuid.UUID) -> Pdf:
+    q = portal.owns_quotation(db, who, quotation_id)
+    v = quotations.current_version(db, q.id)
+    return _quotation(db, q.organisation_id, quotations.read_for_document(db, v))
+
+
+def portal_invoice_pdf(db: Session, who: portal.PortalPrincipal, invoice_id: uuid.UUID) -> Pdf:
+    inv = portal.owns_invoice(db, who, invoice_id)
+    ro = portal.read_only_principal(who.organisation_id)
+    return _invoice(db, ro, invoices.read(db, ro, inv))
+
+
+def portal_receipt_pdf(db: Session, who: portal.PortalPrincipal, payment_id: uuid.UUID) -> Pdf:
+    p = portal.owns_payment(db, who, payment_id)
+    return _receipt(db, who.organisation_id, payments.read(db, p))
+
+
+def portal_inspection_pdf(
+    db: Session, who: portal.PortalPrincipal, storage: ObjectStorage, inspection_id: uuid.UUID
+) -> Pdf:
+    ins, job = portal.owns_inspection(db, who, inspection_id)
+    ro = portal.read_only_principal(who.organisation_id)
+    return _inspection(db, ro, storage, inspections.read_detail(db, ro, ins, job))

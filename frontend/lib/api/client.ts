@@ -38,10 +38,10 @@ export async function api<T = void>(method: Method, path: string, body?: unknown
   });
   if (!res.ok) {
     const error = await toApiError(res);
-    if (error.status === 401 && !path.startsWith("/auth/")) {
+    if (error.status === 401 && !path.startsWith("/auth/") && !path.startsWith("/portal/auth/")) {
       // Full page load on session expiry: discards all client-side state from the old session.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign(`/sign-in?next=${encodeURIComponent(window.location.pathname)}`);
+      const inPortal = window.location.pathname.startsWith("/portal");
+      window.location.assign(inPortal ? "/portal/sign-in" : `/sign-in?next=${encodeURIComponent(window.location.pathname)}`);
     }
     throw error;
   }

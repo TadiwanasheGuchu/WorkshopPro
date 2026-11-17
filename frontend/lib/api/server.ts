@@ -11,17 +11,22 @@ import { toApiError } from "./errors";
  * Forwards the browser's cookies. Redirects to sign-in on 401 and renders the
  * not-found page on 404; other errors throw to the nearest error boundary.
  */
-export async function apiGet<T>(path: string): Promise<T> {
+export async function apiGet<T>(path: string, signIn = "/sign-in"): Promise<T> {
   const cookieHeader = (await cookies()).toString();
   const res = await fetch(`${apiBaseUrl()}/api/v1${path}`, {
     headers: { cookie: cookieHeader, accept: "application/json" },
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),
   });
-  if (res.status === 401) redirect("/sign-in");
+  if (res.status === 401) redirect(signIn);
   if (res.status === 404) notFound();
   if (!res.ok) throw await toApiError(res);
   return (await res.json()) as T;
+}
+
+/** GET for customer portal pages: redirects to the portal sign-in on 401. */
+export function portalGet<T>(path: string): Promise<T> {
+  return apiGet<T>(`/portal${path}`, "/portal/sign-in");
 }
 
 /** Build a query string from defined values only. */

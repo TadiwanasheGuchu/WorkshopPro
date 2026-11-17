@@ -16,6 +16,7 @@ from app.api.v1 import (
     job_parts,
     notifications,
     organisation,
+    portal,
     purchasing,
     quotations,
     reports,
@@ -46,3 +47,5 @@ api_router.include_router(inventory.router)
 api_router.include_router(job_parts.router)
 api_router.include_router(purchasing.router)
 api_router.include_router(notifications.router)
+api_router.include_router(portal.router)
+api_router.include_router(portal.staff_router)

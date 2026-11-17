@@ -90,6 +90,13 @@ def _names(db: Session, ids: list[uuid.UUID | None]) -> dict[uuid.UUID, str]:
 
 def get_inspection(db: Session, principal: Principal, inspection_id: uuid.UUID) -> InspectionDetail:
     inspection, job = _load(db, principal, inspection_id)
+    return read_detail(db, principal, inspection, job)
+
+
+def read_detail(
+    db: Session, principal: Principal, inspection: Inspection, job: JobCard
+) -> InspectionDetail:
+    """Build the detail for an inspection the caller is already allowed to see."""
     items = list(
         db.scalars(
             select(InspectionItem)

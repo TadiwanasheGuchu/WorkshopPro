@@ -63,6 +63,7 @@ from app.models.organisation import (
     OrganisationSettings,
     TaxRate,
 )
+from app.models.portal import PortalAccount, PortalSession, PortalToken
 from app.models.purchasing import (
     GoodsReceivedLine,
     GoodsReceivedNote,
@@ -117,6 +118,9 @@ __all__ = [
     "PartCategory",
     "Payment",
     "PaymentAllocation",
+    "PortalAccount",
+    "PortalSession",
+    "PortalToken",
     "PurchaseOrder",
     "PurchaseOrderLine",
     "Quotation",

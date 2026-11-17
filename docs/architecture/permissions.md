@@ -98,3 +98,7 @@ The transition table lives in `backend/app/services/job_workflow.py`. Assigned m
 3. Add tests: allowed, denied, cross-organisation.
 4. Write a data migration that grants it to the relevant default roles (`roles.template_key`).
 5. Mirror the code in `frontend/lib/permissions.ts` and update navigation if needed.
+
+## Customer portal
+
+Portal customers are not staff users and have no permissions from this catalogue. A portal session (`wp_portal_session` cookie, created by a single-use emailed link) authorises only `/api/v1/portal/*`, and every portal query is filtered by the signed-in account's organisation and customer. Another customer's record is reported as not found. Staff sessions are rejected by portal endpoints and portal sessions by staff endpoints. Giving or removing portal access needs `customers.manage`.

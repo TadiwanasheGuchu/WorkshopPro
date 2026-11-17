@@ -1,6 +1,7 @@
 """Shared API dependencies: database, Redis, settings, authentication."""
 
-from typing import Annotated
+import hmac
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, Header, Request
 from redis import Redis
@@ -11,13 +12,16 @@ from app.core.context import valid_ip
 from app.core.errors import NotAuthenticatedError, PermissionDeniedError
 from app.core.middleware import SAFE_METHODS
 from app.core.redis import get_redis
-from app.core.security import CSRF_HEADER, SESSION_COOKIE
+from app.core.security import CSRF_HEADER, PORTAL_SESSION_COOKIE, SESSION_COOKIE
 from app.db.session import get_db
 from app.integrations.email import EmailSender, get_email_sender
 from app.integrations.storage import ObjectStorage, get_storage
 from app.permissions.principal import Principal, load_principal
 from app.schemas.common import PageParams
 from app.services import auth
+
+if TYPE_CHECKING:
+    from app.services.portal import PortalPrincipal
 
 DbSession = Annotated[Session, Depends(get_db)]
 RedisClient = Annotated[Redis, Depends(get_redis)]
@@ -63,3 +67,20 @@ IdempotencyKey = Annotated[
         ),
     ),
 ]
+
+
+def get_portal_customer(request: Request, db: DbSession) -> "PortalPrincipal":
+    from app.services import portal
+
+    token = request.cookies.get(PORTAL_SESSION_COOKIE)
+    if not token:
+        raise NotAuthenticatedError("Please sign in.")
+    who = portal.resolve(db, token)
+    if request.method not in SAFE_METHODS and not hmac.compare_digest(
+        who.session.csrf_token.encode(), request.headers.get(CSRF_HEADER, "").encode()
+    ):
+        raise PermissionDeniedError("Invalid CSRF token. Refresh the page and try again.")
+    return who
+
+
+PortalCustomer = Annotated["PortalPrincipal", Depends(get_portal_customer)]

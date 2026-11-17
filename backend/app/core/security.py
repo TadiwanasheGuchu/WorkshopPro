@@ -12,6 +12,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
 SESSION_COOKIE = "wp_session"
+PORTAL_SESSION_COOKIE = "wp_portal_session"
 CSRF_COOKIE = "wp_csrf"
 CSRF_HEADER = "x-csrf-token"
 
