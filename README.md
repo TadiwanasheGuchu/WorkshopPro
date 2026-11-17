@@ -52,6 +52,8 @@ docker compose down                 # stop, keep data
 
 `docker compose down -v` **deletes the database volume**. Only use it when you intend to wipe local data.
 
+Free hosted demo (Render + Neon + Upstash, demo data only): [docs/deployment/free-demo.md](docs/deployment/free-demo.md).
+
 Backups (database + stored files) and verified restores: `infrastructure/backups/backup.sh`, `restore.sh` and `restore-drill.sh`, documented in [docs/deployment/backups.md](docs/deployment/backups.md). In production the API refuses to start with unsafe settings (HTTP base URL, placeholder secrets, local mail server and similar) and lists what to fix.
 
 ## Local development without Docker

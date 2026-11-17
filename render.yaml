@@ -1,0 +1,63 @@
+# Render Blueprint for the free hosted DEMO (not for real workshops).
+# Setup steps: docs/deployment/free-demo.md
+#
+# Free-tier trade-offs: services sleep after 15 idle minutes (first visit then takes about
+# a minute), no background worker (messages are delivered inline, retry sweep and service
+# reminders do not run), emails are logged instead of sent, photos are stored in the
+# database. Data lives in Neon (PostgreSQL) and Upstash (Redis), configured below.
+
+services:
+  - type: web
+    name: workshoppro-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: claude/wizardly-albattani-8fwa52
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/v1/health/live
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: ENVIRONMENT
+        value: staging
+      - key: LOG_LEVEL
+        value: INFO
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"
+      - key: CELERY_EAGER
+        value: "true"
+      - key: EMAIL_PROVIDER
+        value: log
+      - key: STORAGE_BACKEND
+        value: database
+      - key: WHATSAPP_PROVIDER
+        value: log
+      # Set in the Render dashboard (never committed):
+      - key: DATABASE_URL # Neon connection string (postgresql://...?sslmode=require)
+        sync: false
+      - key: REDIS_URL # Upstash Redis URL (rediss://default:...@...:6379)
+        sync: false
+      - key: APP_BASE_URL # https://<web service>.onrender.com
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS # same as APP_BASE_URL
+        sync: false
+      - key: DEMO_PASSWORD # password for the demo accounts; seeds an empty database on start
+        sync: false
+
+  - type: web
+    name: workshoppro-web
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: claude/wizardly-albattani-8fwa52
+    dockerContext: ./frontend
+    dockerfilePath: ./frontend/Dockerfile
+    healthCheckPath: /sign-in
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: API_INTERNAL_URL # https://<api service>.onrender.com
+        sync: false

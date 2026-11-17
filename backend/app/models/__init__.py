@@ -81,6 +81,7 @@ from app.models.quotation import (
     QuotationLink,
     QuotationVersion,
 )
+from app.models.storage import StoredObject
 
 __all__ = [
     "Appointment",
@@ -139,6 +140,7 @@ __all__ = [
     "StockOperation",
     "StockReservation",
     "StoredFile",
+    "StoredObject",
     "Supplier",
     "SupplierPart",
     "SupplierReturn",

@@ -7,6 +7,7 @@ Usage:
     python -m app.cli storage-export > objects.tar
     python -m app.cli storage-import < objects.tar
     python -m app.cli verify-restore --manifest - < manifest.json
+    DEMO_PASSWORD=... python -m app.cli seed-demo [--if-empty]
 
 The backup commands stream through stdin/stdout so they can run inside the backend
 container (`docker compose exec -T backend ...`); see infrastructure/backups/.
@@ -100,6 +101,35 @@ def _verify_restore(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def _seed_demo(args: argparse.Namespace) -> int:
+    import os
+
+    from app.db.session import get_sessionmaker as sessionmaker
+    from app.demo import STAFF, DemoError, seed, staff_email
+    from app.main import create_app
+    from app.models import Organisation
+
+    password = os.environ.get("DEMO_PASSWORD", "")
+    try:
+        TypeAdapter(Password).validate_python(password)
+    except ValidationError:
+        print("Set DEMO_PASSWORD to a valid password (see the sign-in rules).", file=sys.stderr)
+        return 2
+    with sessionmaker()() as db:
+        if args.if_empty and db.query(Organisation.id).first() is not None:
+            print("Database already has an organisation; demo not seeded.", file=sys.stderr)
+            return 0
+        try:
+            name = seed(db, create_app(), password)
+        except DemoError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+    print(f"Seeded '{name}'. Sign in as any of (password from DEMO_PASSWORD):")
+    for handle, full_name, _role in STAFF:
+        print(f"  {staff_email(handle):40} {full_name}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="WorkshopPro admin")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -135,6 +165,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     verify.add_argument("--manifest", help="Backup manifest JSON file, or - for stdin")
     verify.set_defaults(handler=_verify_restore)
+
+    demo = sub.add_parser(
+        "seed-demo", help="Create the demo organisation (password from DEMO_PASSWORD)"
+    )
+    demo.add_argument(
+        "--if-empty", action="store_true", help="Do nothing if any organisation exists"
+    )
+    demo.set_defaults(handler=_seed_demo)
 
     args = parser.parse_args(argv)
     return int(args.handler(args))

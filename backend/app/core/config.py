@@ -51,7 +51,11 @@ class Settings(BaseSettings):
     password_reset_requests_per_ip: int = 10
     password_reset_window_seconds: int = 60 * 60
 
-    # --- Email (SMTP) ---
+    # --- Email ---
+    # "smtp" sends through the server below. "log" records that a message was sent
+    # (recipient domain and subject only, never the body) without sending: for demos
+    # without a mail server. Not allowed in production.
+    email_provider: Literal["smtp", "log"] = "smtp"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_username: str | None = None
@@ -59,7 +63,11 @@ class Settings(BaseSettings):
     smtp_starttls: bool = False
     email_from: str = "WorkshopPro <no-reply@workshoppro.local>"
 
-    # --- Object storage (S3-compatible) ---
+    # --- Object storage ---
+    # "s3": any S3-compatible service (SeaweedFS in Compose). "database": bytes kept in
+    # PostgreSQL (table stored_objects) for hosts without object storage or a disk, such
+    # as the free hosted demo. Fine for small volumes; use S3 for real installations.
+    storage_backend: Literal["s3", "database"] = "s3"
     storage_endpoint_url: str | None = "http://localhost:8333"
     storage_bucket: str = "workshoppro"
     # Credentials must come from the environment; there is no usable default.
@@ -82,6 +90,17 @@ class Settings(BaseSettings):
     # Used to verify webhook signatures (X-Hub-Signature-256) and the subscription.
     whatsapp_app_secret: str = ""
     whatsapp_webhook_verify_token: str = ""
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _psycopg_driver(cls, value: object) -> object:
+        # Hosted databases (Neon, Render) hand out postgres:// or postgresql:// URLs;
+        # SQLAlchemy needs the psycopg (v3) driver named explicitly.
+        if isinstance(value, str):
+            for prefix in ("postgres://", "postgresql://"):
+                if value.startswith(prefix):
+                    return "postgresql+psycopg://" + value.removeprefix(prefix)
+        return value
 
     @field_validator("cookie_secure", mode="before")
     @classmethod
@@ -117,9 +136,15 @@ class Settings(BaseSettings):
             problems.append("COOKIE_SECURE must not be false in production")
         if any(p in str(self.database_url) for p in placeholders):
             problems.append("DATABASE_URL still uses a placeholder password")
-        if not self.storage_access_key or not self.storage_secret_key:
+        if self.email_provider == "log":
+            problems.append("EMAIL_PROVIDER=log does not send email; use smtp in production")
+        if self.storage_backend == "s3" and (
+            not self.storage_access_key or not self.storage_secret_key
+        ):
             problems.append("STORAGE_ACCESS_KEY and STORAGE_SECRET_KEY must be set")
-        elif any(p in self.storage_secret_key for p in placeholders):
+        elif self.storage_backend == "s3" and any(
+            p in self.storage_secret_key for p in placeholders
+        ):
             problems.append("STORAGE_SECRET_KEY still uses a placeholder value")
         if self.smtp_host in ("mailpit", "localhost", "127.0.0.1"):
             problems.append("SMTP_HOST points at the local development mail catcher")

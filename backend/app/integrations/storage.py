@@ -1,4 +1,5 @@
-"""Object storage adaptor (S3-compatible: MinIO locally, any S3 service in production).
+"""Object storage adaptor: S3-compatible (SeaweedFS locally, any S3 service in production),
+or PostgreSQL for hosts without object storage (STORAGE_BACKEND=database).
 
 Objects are private. The browser never receives storage URLs or credentials; files are
 streamed through the API after a permission check (app/api/v1/files.py).
@@ -114,9 +115,74 @@ class InMemoryStorage:
         return self.objects[key][1]
 
 
+class DatabaseStorage:
+    """STORAGE_BACKEND=database: object bytes in PostgreSQL (table stored_objects), for
+    hosts without object storage or a persistent disk. Uses its own short transactions,
+    like a call to S3 would."""
+
+    def put(self, key: str, data: bytes, content_type: str) -> None:
+        from sqlalchemy.dialects.postgresql import insert
+
+        from app.db.session import get_sessionmaker
+        from app.models.storage import StoredObject
+
+        values = {"key": key, "data": data, "content_type": content_type, "size_bytes": len(data)}
+        with get_sessionmaker()() as db:
+            stmt = insert(StoredObject).values(**values)
+            db.execute(
+                stmt.on_conflict_do_update(
+                    index_elements=[StoredObject.key],
+                    set_={k: stmt.excluded[k] for k in ("data", "content_type", "size_bytes")},
+                )
+            )
+            db.commit()
+
+    def _row(self, key: str) -> tuple[bytes, str]:
+        from sqlalchemy import select
+
+        from app.db.session import get_sessionmaker
+        from app.models.storage import StoredObject
+
+        with get_sessionmaker()() as db:
+            row = db.execute(
+                select(StoredObject.data, StoredObject.content_type).where(StoredObject.key == key)
+            ).first()
+        if row is None:
+            raise StorageError("File not available.")
+        return bytes(row[0]), row[1]
+
+    def get(self, key: str) -> bytes:
+        return self._row(key)[0]
+
+    def content_type(self, key: str) -> str:
+        return self._row(key)[1]
+
+    def delete(self, key: str) -> None:
+        from sqlalchemy import delete
+
+        from app.db.session import get_sessionmaker
+        from app.models.storage import StoredObject
+
+        with get_sessionmaker()() as db:
+            db.execute(delete(StoredObject).where(StoredObject.key == key))
+            db.commit()
+
+    def list_keys(self) -> Iterator[str]:
+        from sqlalchemy import select
+
+        from app.db.session import get_sessionmaker
+        from app.models.storage import StoredObject
+
+        with get_sessionmaker()() as db:
+            keys = list(db.scalars(select(StoredObject.key).order_by(StoredObject.key)))
+        yield from keys
+
+
 @lru_cache
 def get_storage() -> ObjectStorage:
     s = get_settings()
+    if s.storage_backend == "database":
+        return DatabaseStorage()
     storage = S3Storage(
         endpoint=s.storage_endpoint_url,
         bucket=s.storage_bucket,

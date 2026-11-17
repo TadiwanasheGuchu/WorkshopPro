@@ -72,6 +72,20 @@ class SmtpEmailSender:
         logger.info("email_sent", extra={"subject": message.subject})
 
 
+class LogEmailSender:
+    """EMAIL_PROVIDER=log: records that an email would have been sent, without sending.
+    Logs only the recipient's domain and the subject; bodies can hold single-use links."""
+
+    def send(self, message: OutgoingEmail) -> None:
+        self.deliver(message)
+
+    def deliver(self, message: OutgoingEmail) -> None:
+        logger.info(
+            "email_logged_not_sent",
+            extra={"to_domain": message.to.rpartition("@")[2], "subject": message.subject},
+        )
+
+
 class InMemoryEmailSender:
     """Used in tests. Set `fail_with` to make the next deliveries raise."""
 
@@ -90,4 +104,7 @@ class InMemoryEmailSender:
 
 @lru_cache
 def get_email_sender() -> EmailSender:
-    return SmtpEmailSender(get_settings())
+    settings = get_settings()
+    if settings.email_provider == "log":
+        return LogEmailSender()
+    return SmtpEmailSender(settings)
